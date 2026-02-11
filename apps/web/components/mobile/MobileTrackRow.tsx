@@ -1,6 +1,7 @@
 "use client";
 
 import React, { memo, useMemo, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Track } from "@/lib/api/types";
 import { getTrackTitle, formatTime } from "@/lib/api/utils";
 import { api } from "@/lib/api";
@@ -244,104 +245,94 @@ function MobileTrackRow({
         </button>
       </div>
 
-      {/* Context Menu */}
-      <AnimatePresence>
-        {showContextMenu && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-50"
-              onClick={() => setShowContextMenu(false)}
-            />
+      {/* Context Menu - portaled to body to escape scroll containers */}
+      {typeof window !== "undefined" && createPortal(
+        <AnimatePresence>
+          {showContextMenu && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/60 z-[200]"
+                onClick={() => setShowContextMenu(false)}
+              />
 
-            {/* Menu */}
-            <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t border-white/10"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-            >
-              {/* Track preview */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
-                {coverUrl && (
-                  <div className="w-10 h-10 flex-shrink-0 overflow-hidden">
-                    <Image
-                      src={coverUrl}
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="w-full h-full object-cover"
-                    />
+              {/* Menu */}
+              <motion.div
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="fixed bottom-0 left-0 right-0 z-[201] bg-black border-t border-white/10"
+                style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              >
+                {/* Track info - compact */}
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-medium text-white truncate">{getTrackTitle(track)}</div>
+                    <div className="text-[11px] text-white/50 truncate">{displayArtist}</div>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm text-white truncate">
-                    {getTrackTitle(track)}
-                  </div>
-                  <div className="text-xs text-white/50 truncate">{displayArtist}</div>
                 </div>
-              </div>
 
-              {/* Actions */}
-              <div className="py-1">
-                <button
-                  onClick={() => handleContextMenuAction("play")}
-                  className="w-full flex items-center gap-4 px-4 py-3 active:bg-white/5"
-                >
-                  <Play className="w-5 h-5 text-white/60" />
-                  <span className="text-sm text-white">Play Now</span>
-                </button>
+                {/* Actions */}
+                <div className="py-1">
+                  <button
+                    onClick={() => handleContextMenuAction("play")}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/5"
+                  >
+                    <Play className="w-4 h-4 text-white/60" />
+                    <span className="text-[13px] text-white">Play Now</span>
+                  </button>
 
-                <button
-                  onClick={() => handleContextMenuAction("queue")}
-                  className="w-full flex items-center gap-4 px-4 py-3 active:bg-white/5"
-                >
-                  <ListPlus className="w-5 h-5 text-white/60" />
-                  <span className="text-sm text-white">Add to Queue</span>
-                </button>
+                  <button
+                    onClick={() => handleContextMenuAction("queue")}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/5"
+                  >
+                    <ListPlus className="w-4 h-4 text-white/60" />
+                    <span className="text-[13px] text-white">Add to Queue</span>
+                  </button>
 
-                <button
-                  onClick={() => handleContextMenuAction("download")}
-                  disabled={isThisDownloading}
-                  className="w-full flex items-center gap-4 px-4 py-3 active:bg-white/5"
-                >
-                  {isThisDownloading ? (
-                    <Loader2 className="w-5 h-5 text-white/60 animate-spin" />
-                  ) : (
-                    <Download className="w-5 h-5 text-white/60" />
-                  )}
-                  <span className="text-sm text-white">
-                    {isThisDownloading ? "Downloading..." : "Download"}
-                  </span>
-                </button>
+                  <button
+                    onClick={() => handleContextMenuAction("download")}
+                    disabled={isThisDownloading}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/5"
+                  >
+                    {isThisDownloading ? (
+                      <Loader2 className="w-4 h-4 text-white/60 animate-spin" />
+                    ) : (
+                      <Download className="w-4 h-4 text-white/60" />
+                    )}
+                    <span className="text-[13px] text-white">
+                      {isThisDownloading ? "Downloading..." : "Download"}
+                    </span>
+                  </button>
 
-                <button
-                  onClick={() => handleContextMenuAction("share")}
-                  className="w-full flex items-center gap-4 px-4 py-3 active:bg-white/5"
-                >
-                  <Share2 className="w-5 h-5 text-white/60" />
-                  <span className="text-sm text-white">Share</span>
-                </button>
-              </div>
+                  <button
+                    onClick={() => handleContextMenuAction("share")}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/5"
+                  >
+                    <Share2 className="w-4 h-4 text-white/60" />
+                    <span className="text-[13px] text-white">Share</span>
+                  </button>
+                </div>
 
-              {/* Cancel */}
-              <div className="border-t border-white/10">
-                <button
-                  onClick={() => setShowContextMenu(false)}
-                  className="w-full py-3 text-sm font-medium text-white/60 active:bg-white/5"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                {/* Cancel */}
+                <div className="border-t border-white/10">
+                  <button
+                    onClick={() => setShowContextMenu(false)}
+                    className="w-full py-2.5 text-[13px] font-medium text-white/60 active:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
