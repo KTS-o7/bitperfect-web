@@ -5,8 +5,9 @@ import { Track } from "@/lib/api/types";
 import { getTrackTitle, formatTime } from "@/lib/api/utils";
 import { api } from "@/lib/api";
 import Image from "next/image";
-import { Disc, Heart } from "lucide-react";
+import { Disc, Heart, Download, Loader2 } from "lucide-react";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import { useDownload } from "@/hooks/useDownload";
 
 interface TrackRowProps {
   track: Track;
@@ -56,12 +57,14 @@ function TrackRow({
 
   const { toggleLikeTrack, isLiked } = usePersistence();
   const liked = isLiked(track.id);
+  const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
+  const isThisDownloading = isDownloading && downloadingTrackId === track.id;
 
   return (
     <div
       onClick={onClick}
       className={`
-        group relative grid grid-cols-[40px_40px_1fr_40px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_40px]
+        group relative grid grid-cols-[40px_40px_1fr_40px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_80px]
         gap-3 md:gap-4 items-center
         px-4 md:px-6 py-3 border-b border-foreground/10 cursor-pointer
         transition-all duration-200
@@ -184,8 +187,8 @@ function TrackRow({
         </span>
       </div>
 
-      {/* Like Button */}
-      <div className="text-right">
+      {/* Like & Download Buttons */}
+      <div className="flex items-center justify-end gap-1">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -200,6 +203,23 @@ function TrackRow({
               : "text-foreground/20 group-hover/heart:text-foreground/40 group-hover/heart:scale-110"
               }`}
           />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            downloadTrack(track);
+          }}
+          disabled={isThisDownloading}
+          className="p-2 transition-transform active:scale-95 group/dl"
+          aria-label="Download track"
+        >
+          {isThisDownloading ? (
+            <Loader2 className="w-4 h-4 text-foreground/40 animate-spin" />
+          ) : (
+            <Download
+              className="w-4 h-4 text-foreground/20 group-hover/dl:text-foreground/40 group-hover/dl:scale-110 transition-all"
+            />
+          )}
         </button>
       </div>
     </div>

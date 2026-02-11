@@ -20,8 +20,11 @@ import {
   Music2,
   Maximize2,
   Heart,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import { useDownload } from "@/hooks/useDownload";
 import React, {
   useRef,
   useState,
@@ -96,6 +99,8 @@ export function AudioPlayer() {
 
   const { toggleLikeTrack, isLiked } = usePersistence();
   const liked = currentTrack ? isLiked(currentTrack.id) : false;
+  const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
+  const isCurrentDownloading = currentTrack ? isDownloading && downloadingTrackId === currentTrack.id : false;
 
   const progressBarRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -328,6 +333,20 @@ export function AudioPlayer() {
                 title="Open Fullscreen Player"
               >
                 <Maximize2 className="w-3.5 h-3.5 text-foreground/50 hover:text-foreground transition-colors" />
+              </button>
+
+              <button
+                onClick={() => currentTrack && downloadTrack(currentTrack)}
+                disabled={isCurrentDownloading}
+                className="w-7 h-7 flex items-center justify-center hover:bg-foreground/10 transition-colors"
+                aria-label="Download track"
+                title="Download track"
+              >
+                {isCurrentDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 text-foreground/50 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 text-foreground/50 hover:text-foreground transition-colors" />
+                )}
               </button>
 
               {hasLyrics && (

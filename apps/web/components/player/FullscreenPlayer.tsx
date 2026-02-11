@@ -20,6 +20,8 @@ import {
   Music2,
   GripVertical,
   Heart,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Image from "next/image";
@@ -30,6 +32,7 @@ import { useLyrics } from "@/hooks/useLyrics";
 import { LyricsPanel } from "./LyricsPanel";
 import type { Track } from "@/lib/api/types";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import { useDownload } from "@/hooks/useDownload";
 import {
   DndContext,
   closestCenter,
@@ -242,6 +245,8 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
   const { toggleLikeTrack, isLiked } = usePersistence();
 
   const liked = currentTrack ? isLiked(currentTrack.id) : false;
+  const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
+  const isCurrentDownloading = currentTrack ? isDownloading && downloadingTrackId === currentTrack.id : false;
 
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
   const [expandedTab, setExpandedTab] = useState<Tab>(null); // Mobile only
@@ -476,17 +481,31 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                       </div>
                     </div>
 
-                    {/* Desktop Like Button */}
-                    <button
-                      onClick={() => toggleLikeTrack(currentTrack)}
-                      className="mt-6 w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group/heart"
-                      aria-label={liked ? "Remove from Favorites" : "Add to Favorites"}
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all ${liked ? "fill-red-500 text-red-500 scale-110" : "text-foreground/20 group-hover/heart:text-foreground/50"
-                          }`}
-                      />
-                    </button>
+                    {/* Desktop Like & Download Buttons */}
+                    <div className="mt-6 flex items-center gap-2">
+                      <button
+                        onClick={() => toggleLikeTrack(currentTrack)}
+                        className="w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group/heart"
+                        aria-label={liked ? "Remove from Favorites" : "Add to Favorites"}
+                      >
+                        <Heart
+                          className={`w-5 h-5 transition-all ${liked ? "fill-red-500 text-red-500 scale-110" : "text-foreground/20 group-hover/heart:text-foreground/50"
+                            }`}
+                        />
+                      </button>
+                      <button
+                        onClick={() => downloadTrack(currentTrack)}
+                        disabled={isCurrentDownloading}
+                        className="w-10 h-10 flex items-center justify-center transition-transform active:scale-95 group/dl"
+                        aria-label="Download track"
+                      >
+                        {isCurrentDownloading ? (
+                          <Loader2 className="w-5 h-5 text-foreground/40 animate-spin" />
+                        ) : (
+                          <Download className="w-5 h-5 text-foreground/20 group-hover/dl:text-foreground/50 transition-all" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
@@ -668,17 +687,31 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                       </div>
                     </div>
 
-                    {/* Mobile Player Info Like Button */}
-                    <button
-                      onClick={() => toggleLikeTrack(currentTrack)}
-                      className="w-10 h-10 flex items-center justify-center transition-transform active:scale-95"
-                      aria-label={liked ? "Remove from Favorites" : "Add to Favorites"}
-                    >
-                      <Heart
-                        className={`w-6 h-6 transition-all ${liked ? "fill-red-500 text-red-500" : "text-foreground/20"
-                          }`}
-                      />
-                    </button>
+                    {/* Mobile Player Info Like & Download Buttons */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => toggleLikeTrack(currentTrack)}
+                        className="w-10 h-10 flex items-center justify-center transition-transform active:scale-95"
+                        aria-label={liked ? "Remove from Favorites" : "Add to Favorites"}
+                      >
+                        <Heart
+                          className={`w-6 h-6 transition-all ${liked ? "fill-red-500 text-red-500" : "text-foreground/20"
+                            }`}
+                        />
+                      </button>
+                      <button
+                        onClick={() => downloadTrack(currentTrack)}
+                        disabled={isCurrentDownloading}
+                        className="w-10 h-10 flex items-center justify-center transition-transform active:scale-95"
+                        aria-label="Download track"
+                      >
+                        {isCurrentDownloading ? (
+                          <Loader2 className="w-5 h-5 text-foreground/40 animate-spin" />
+                        ) : (
+                          <Download className="w-5 h-5 text-foreground/20" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
