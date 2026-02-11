@@ -185,11 +185,7 @@ export function SearchResults({
     }
   };
 
-  const handleArtistClick = (artist: Artist) => {
-  };
 
-  const handlePlaylistClick = (playlist: Playlist) => {
-  };
 
   if (isLoading) {
     return (
@@ -373,14 +369,14 @@ export function SearchResults({
             {contentType === "artists" &&
               artists?.map((artist) => (
                 <div key={artist.id} className="w-full">
-                  <ArtistCard artist={artist} onClick={handleArtistClick} />
+                  <ArtistCard artist={artist} />
                 </div>
               ))}
 
             {contentType === "playlists" &&
               playlists?.map((playlist) => (
                 <div key={playlist.uuid} className="w-full">
-                  <PlaylistCard playlist={playlist} onClick={handlePlaylistClick} />
+                  <PlaylistCard playlist={playlist} />
                 </div>
               ))}
           </div>

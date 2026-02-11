@@ -25,8 +25,6 @@ export function useSearch() {
       const totalItems = lastPage.totalNumberOfItems ?? 0;
       const nextOffset = currentOffset + currentLimit;
 
-      const nextOffset = currentOffset + currentLimit;
-
       // Return undefined if we've reached the end
       if (nextOffset >= totalItems) {
         return undefined;
