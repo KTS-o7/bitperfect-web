@@ -1,0 +1,19 @@
+{
+  "name": "bitperfect-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "bun run dev --filter=@bitperfect/web",
+    "build:web": "bun run build --filter=@bitperfect/web",
+    "dev:mobile": "bun run dev --filter=@bitperfect/mobile",
+    "build": "turbo run build",
+    "dev": "turbo run dev"
+  },
+  "devDependencies": {
+    "turbo": "^2"
+  },
+  "packageManager": "bun@1.3.6"
+}

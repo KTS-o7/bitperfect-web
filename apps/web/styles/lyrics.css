@@ -1,0 +1,69 @@
+/* Lyrics UI Styles */
+
+.lyrics-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.lyrics-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  scrollbar-width: none; /* Firefox */
+}
+
+.lyrics-content::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.synced-line {
+  transition: all 0.3s ease;
+  transform-origin: left center;
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+/* Active line: Full opacity, larger scale */
+.synced-line.active {
+  opacity: 1;
+  color: white;
+  transform: scale(1.1);
+  filter: blur(0px);
+}
+
+/* Past lines: Low opacity, blurred */
+.synced-line.past {
+  opacity: 0.3;
+  filter: blur(1.5px);
+}
+
+/* Upcoming line: Medium opacity */
+.synced-line.upcoming {
+  opacity: 0.6;
+  filter: blur(0px);
+}
+
+.karaoke-view {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: black;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.karaoke-lyrics-container {
+  width: 100%;
+  max-width: 800px;
+  height: 70vh;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+}

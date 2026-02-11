@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#000000"/>
+  <g transform="translate(180, 200)">
+    <!-- VHS bars -->
+    <rect x="0" y="0" width="48" height="8" fill="#FF9FCF"/>
+    <rect x="0" y="16" width="48" height="8" fill="#9AC0FF"/>
+    <rect x="0" y="32" width="48" height="8" fill="#7FEDD0"/>
+  </g>
+  <text x="256" y="320" font-family="monospace" font-size="64" font-weight="bold" fill="white" text-anchor="middle">SIDE A</text>
+</svg>
