@@ -8,9 +8,8 @@
   "scripts": {
     "dev:web": "bun run dev --filter=@bitperfect/web",
     "build:web": "bun run build --filter=@bitperfect/web",
-    "dev:mobile": "bun run dev --filter=@bitperfect/mobile",
-    "build": "turbo run build",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "build": "turbo run build"
   },
   "devDependencies": {
     "turbo": "^2"
