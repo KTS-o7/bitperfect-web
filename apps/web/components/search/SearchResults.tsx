@@ -15,7 +15,7 @@ import ArtistCard from "./ArtistCard";
 import PlaylistCard from "./PlaylistCard";
 import { TableHeader } from "./TableHeader";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Music2, Disc, Users, ListMusic, Loader2 } from "lucide-react";
+import { Search, Music2, Disc, Users, ListMusic, Loader2, LucideIcon } from "lucide-react";
 import { VirtualSearchResults } from "./VirtualSearchResults";
 
 type SearchContentType = "tracks" | "albums" | "artists" | "playlists";
@@ -158,7 +158,7 @@ export function SearchResults({
   // }, [hasNextPage, isFetchingMore]); // Removed onLoadMore from deps
 
   // Define all available tabs
-  const allTabs: { id: SearchContentType; label: string; icon: any }[] = [
+  const allTabs: { id: SearchContentType; label: string; icon: LucideIcon }[] = [
     { id: "tracks", label: "Songs", icon: Music2 },
     { id: "albums", label: "Albums", icon: Disc },
     { id: "artists", label: "Artists", icon: Users },
