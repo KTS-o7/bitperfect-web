@@ -5,7 +5,7 @@ import {
   usePlaybackState,
   useQueue,
 } from "@/contexts/AudioPlayerContext";
-import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
+import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
 import {
   ChevronDown,
   ChevronLeft,
@@ -109,7 +109,7 @@ function DesktopSortableQueueItem({
       >
         {track.album?.cover ? (
           <Image
-            src={`https://resources.tidal.com/images/${String(track.album.cover).replace(/-/g, "/")}/320x320.jpg`}
+            src={getCoverUrl(track.album.cover, "320")}
             alt=""
             fill
             sizes="40px"
@@ -190,7 +190,7 @@ function MobileSortableQueueItem({
       >
         {track.album?.cover ? (
           <Image
-            src={`https://resources.tidal.com/images/${String(track.album.cover).replace(/-/g, "/")}/160x160.jpg`}
+            src={getCoverUrl(track.album.cover, "160")}
             alt=""
             fill
             sizes="48px"
@@ -318,11 +318,10 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
     [queue, sortableIds, currentQueueIndex, reorderQueue],
   );
 
-  const getCoverUrl = () => {
+  const getCoverUrlFn = () => {
     const coverId = currentTrack?.album?.cover || currentTrack?.album?.id;
     if (!coverId) return null;
-    const formattedId = String(coverId).replace(/-/g, "/");
-    return `https://resources.tidal.com/images/${formattedId}/640x640.jpg`;
+    return getCoverUrl(coverId, "640");
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -351,7 +350,7 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
 
   if (!currentTrack) return null;
 
-  const coverUrl = getCoverUrl();
+  const coverUrl = getCoverUrlFn();
   const content = (
     <AnimatePresence>
       {isOpen && (

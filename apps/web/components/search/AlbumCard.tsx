@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Album } from "@/lib/api/types";
+import { api } from "@/lib/api";
 
 interface AlbumCardProps {
   album: Album;
@@ -9,10 +10,7 @@ interface AlbumCardProps {
 
 function AlbumCard({ album }: AlbumCardProps) {
   const coverUrl = album.cover
-    ? `https://resources.tidal.com/images/${album.cover.replace(
-        /-/g,
-        "/"
-      )}/750x750.jpg`
+    ? api.getCoverUrl(album.cover, "750")
     : "/placeholder-album.png";
 
   const artistName =

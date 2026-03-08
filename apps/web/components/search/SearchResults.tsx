@@ -17,6 +17,7 @@ import { TableHeader } from "./TableHeader";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Music2, Disc, Users, ListMusic, LucideIcon } from "lucide-react";
 import { VirtualSearchResults } from "./VirtualSearchResults";
+import { VirtualTrackList } from "./VirtualTrackList";
 
 type SearchContentType = "tracks" | "albums" | "artists" | "playlists";
 
@@ -236,7 +237,13 @@ export function SearchResults({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       >
-        {contentType === "tracks" ? (
+        {contentType === "tracks" && tracks && tracks.length > 50 && windowDimensions.width > 0 ? (
+          <VirtualTrackList
+            tracks={tracks}
+            height={windowDimensions.height - 200}
+            width={windowDimensions.width}
+          />
+        ) : contentType === "tracks" ? (
           <div className="border-t border-foreground/10">
             {/* Table header - desktop only */}
             <div className="sticky top-[4.8rem] z-10 hidden lg:block">

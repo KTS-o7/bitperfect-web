@@ -17,4 +17,6 @@ export {
   getTrackArtists,
   formatDuration,
   hasExplicitContent,
+  getCoverUrl,
+  getCoverUrlBySize,
 } from "@bitperfect/shared/api";
