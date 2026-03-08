@@ -15,7 +15,7 @@ import ArtistCard from "./ArtistCard";
 import PlaylistCard from "./PlaylistCard";
 import { TableHeader } from "./TableHeader";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, Music2, Disc, Users, ListMusic, Loader2 } from "lucide-react";
+import { Search, Music2, Disc, Users, ListMusic, LucideIcon } from "lucide-react";
 import { VirtualSearchResults } from "./VirtualSearchResults";
 
 type SearchContentType = "tracks" | "albums" | "artists" | "playlists";
@@ -96,69 +96,8 @@ export function SearchResults({
   // Check if mobile (< 1024px)
   const isMobile = windowDimensions.width > 0 && windowDimensions.width < 1024;
 
-  // DISABLED: Infinite scroll observer
-  // const observerTarget = React.useRef<HTMLDivElement>(null);
-
-  // // Use ref to avoid recreating observer when onLoadMore changes
-  // const onLoadMoreRef = React.useRef(onLoadMore);
-  // React.useEffect(() => {
-  //  onLoadMoreRef.current = onLoadMore;
-  // }, [onLoadMore]);
-
-  // Track window dimensions for virtual scrolling with debounce
-  React.useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const handleResize = () => {
-      // Clear existing timeout
-      clearTimeout(timeoutId);
-
-      // Debounce the state update
-      timeoutId = setTimeout(() => {
-        setWindowDimensions({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        });
-      }, 150);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  // DISABLED: Infinite scroll IntersectionObserver
-  // React.useEffect(() => {
-  //  const observer = new IntersectionObserver(
-  //   (entries) => {
-  //    if (
-  //     entries[0].isIntersecting &&
-  //     hasNextPage &&
-  //     !isFetchingMore &&
-  //     onLoadMoreRef.current
-  //    ) {
-  //     onLoadMoreRef.current();
-  //    }
-  //   },
-  //   { threshold: 0.1, rootMargin: "100px" },
-  //  );
-
-  //  const currentTarget = observerTarget.current;
-  //  if (currentTarget) {
-  //   observer.observe(currentTarget);
-  //  }
-
-  //  return () => {
-  //   if (currentTarget) {
-  //    observer.unobserve(currentTarget);
-  //   }
-  //  };
-  // }, [hasNextPage, isFetchingMore]); // Removed onLoadMore from deps
-
   // Define all available tabs
-  const allTabs: { id: SearchContentType; label: string; icon: any }[] = [
+  const allTabs: { id: SearchContentType; label: string; icon: LucideIcon }[] = [
     { id: "tracks", label: "Songs", icon: Music2 },
     { id: "albums", label: "Albums", icon: Disc },
     { id: "artists", label: "Artists", icon: Users },
@@ -382,23 +321,6 @@ export function SearchResults({
           </div>
         )}
       </motion.div>
-
-      {/* DISABLED: Infinite Scroll Loading Indicator */}
-      {/* {isFetchingMore && (
-    <motion.div
-     initial={{ opacity: 0 }}
-     animate={{ opacity: 1 }}
-     className="flex items-center justify-center py-8 mt-4"
-    >
-     <div className="flex items-center gap-3 text-foreground/40">
-      <Loader2 className="w-5 h-5 animate-spin" />
-      <span className="text-sm font-medium">Loading more...</span>
-     </div>
-    </motion.div>
-   )} */}
-
-      {/* DISABLED: Intersection Observer Target */}
-      {/* <div ref={observerTarget} className="h-4" /> */}
     </div>
   );
 }

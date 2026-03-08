@@ -128,7 +128,7 @@ export function useSearch() {
 
       queryClient.prefetchInfiniteQuery({
         queryKey,
-        queryFn: (({ pageParam = 0 }) => {
+        queryFn: async ({ pageParam = 0 }) => {
           if (tab === "tracks") {
             return api.searchTracks(query, { offset: pageParam, limit: 25 });
           } else if (tab === "albums") {
@@ -136,7 +136,7 @@ export function useSearch() {
           } else {
             return api.searchArtists(query, { offset: pageParam, limit: 25 });
           }
-        }) as any,
+        },
         initialPageParam: 0,
       });
     },

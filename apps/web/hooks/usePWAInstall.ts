@@ -15,6 +15,9 @@ declare global {
   interface WindowEventMap {
     beforeinstallprompt: BeforeInstallPromptEvent;
   }
+  interface Navigator {
+    standalone?: boolean;
+  }
 }
 
 const INSTALL_DISMISSED_KEY = "pwa-install-dismissed";
@@ -34,7 +37,7 @@ export function usePWAInstall() {
     const checkStandalone = () => {
       const standalone =
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true;
+        window.navigator.standalone === true;
       setIsStandalone(standalone);
       setIsInstalled(standalone);
     };
@@ -45,7 +48,7 @@ export function usePWAInstall() {
     const checkIOS = () => {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
-      const isInStandaloneMode = (window.navigator as any).standalone === true;
+      const isInStandaloneMode = window.navigator.standalone === true;
       setIsIOS(isIOSDevice && !isInStandaloneMode);
     };
 
@@ -85,7 +88,7 @@ export function usePWAInstall() {
     if (!isDismissed && visitCount >= MIN_VISITS_FOR_PROMPT) {
       const userAgent = window.navigator.userAgent.toLowerCase();
       const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
-      const isInStandaloneMode = (window.navigator as any).standalone === true;
+      const isInStandaloneMode = window.navigator.standalone === true;
 
       if (isIOSDevice && !isInStandaloneMode) {
         setTimeout(() => {

@@ -1,12 +1,19 @@
 // Extend Window interface to include gtag
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void;
+    gtag?: (command: string, eventName: string, params?: Record<string, unknown>) => void;
   }
 }
 
-export function reportWebVitals(metric: any) {
+interface WebVitalsMetric {
+  id: string;
+  name: string;
+  value: number;
+}
+
+export function reportWebVitals(metric: WebVitalsMetric) {
   if (process.env.NODE_ENV === "development") {
+    return;
   }
 
   // Send to analytics in production
