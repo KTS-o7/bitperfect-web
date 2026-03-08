@@ -8,16 +8,15 @@ import {
 } from "@/contexts/AudioPlayerContext";
 import { useState, useCallback } from "react";
 import React from "react";
-import TrackRow from "./TrackRow";
-import MobileTrackRow from "../mobile/MobileTrackRow";
 import AlbumCard from "./AlbumCard";
 import ArtistCard from "./ArtistCard";
 import PlaylistCard from "./PlaylistCard";
-import { TableHeader } from "./TableHeader";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { Search, Music2, Disc, Users, ListMusic, LucideIcon } from "lucide-react";
 import { VirtualSearchResults } from "./VirtualSearchResults";
-import { VirtualTrackList } from "./VirtualTrackList";
+import { TabNavigation } from "./SearchResults/TabNavigation";
+import { TrackResults } from "./SearchResults/TrackResults";
+import { SkeletonRows } from "./SearchResults/SkeletonRows";
 
 type SearchContentType = "tracks" | "albums" | "artists" | "playlists";
 
@@ -79,25 +78,19 @@ export function SearchResults({
   onLoadMore,
   prefetchTab,
 }: SearchResultsProps) {
-  // Use split contexts for state
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-
-  // Still need AudioPlayerContext for methods
   const { setQueue } = useAudioPlayer();
 
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
 
-  // Lazy initialization to avoid SSR issues
   const [windowDimensions, setWindowDimensions] = useState(() => ({
     width: typeof window !== "undefined" ? window.innerWidth : 0,
     height: typeof window !== "undefined" ? window.innerHeight : 0,
   }));
 
-  // Check if mobile (< 1024px)
   const isMobile = windowDimensions.width > 0 && windowDimensions.width < 1024;
 
-  // Define all available tabs
   const allTabs: { id: SearchContentType; label: string; icon: LucideIcon }[] = [
     { id: "tracks", label: "Songs", icon: Music2 },
     { id: "albums", label: "Albums", icon: Disc },
@@ -105,10 +98,7 @@ export function SearchResults({
     { id: "playlists", label: "Playlists", icon: ListMusic },
   ];
 
-  // Show all implemented tabs (lazy load content when tab is clicked)
-  // Filter out playlists until backend support is added
   const tabs = allTabs.filter((tab) => tab.id !== "playlists");
-
 
   const handleTrackClick = async (track: Track, index: number) => {
     if (loadingTrackId === track.id) return;
@@ -125,32 +115,16 @@ export function SearchResults({
     }
   };
 
-
+  React.useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   if (isLoading) {
-    return (
-      <div className="w-full border-t border-foreground/10">
-        <TableHeader />
-        <div>
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-[50px_40px_1fr_180px_120px_80px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px] md:grid-cols-[40px_40px_1fr_60px] gap-4 items-center px-6 py-3 border-b border-foreground/10 animate-pulse"
-            >
-              <div className="h-3 w-6 bg-foreground/10 mx-auto" />
-              <div className="w-10 h-10 bg-foreground/10 border border-foreground/10" />
-              <div className="space-y-2">
-                <div className="h-4 w-2/3 bg-foreground/10" />
-                <div className="h-3 w-1/2 bg-foreground/10" />
-              </div>
-              <div className="hidden lg:block h-3 w-3/4 bg-foreground/10" />
-              <div className="hidden lg:block h-3 w-16 bg-foreground/10" />
-              <div className="h-3 w-12 bg-foreground/10 ml-auto" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <SkeletonRows />;
   }
 
   const items =
@@ -174,51 +148,13 @@ export function SearchResults({
 
   return (
     <div className="w-full">
-      {/* Tab Navigation - Touch-optimized with horizontal scroll */}
-      <div className="sticky -top-6 z-10 pb-0 -mx-4 px-0 lg:px-4 bg-background/95 backdrop-blur-2xl border-b border-foreground/10">
-        <div
-          className="flex items-center gap-1 lg:gap-8 overflow-x-auto no-scrollbar py-2 lg:py-4 px-4"
-          style={{ WebkitOverflowScrolling: "touch" }}
-        >
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange?.(tab.id)}
-              onMouseEnter={() => {
-                if (tab.id !== "playlists" && prefetchTab) {
-                  prefetchTab(tab.id as "tracks" | "albums" | "artists");
-                }
-              }}
-              className={`
-        relative flex-shrink-0
-        px-4 py-3 lg:px-0 lg:pb-3 lg:pt-0
-        text-xs font-mono uppercase tracking-widest
-        transition-all whitespace-nowrap outline-none
-        active:bg-foreground/5 lg:active:bg-transparent
-        ${contentType === tab.id
-                  ? "text-foreground"
-                  : "text-foreground/40 hover:text-foreground/70"
-                }
-       `}
-            >
-              <span className="flex items-center gap-2">
-                <tab.icon className="w-4 h-4 lg:w-3.5 lg:h-3.5" />
-                {tab.label}
-              </span>
-              {contentType === tab.id && (
-                <motion.div
-                  layoutId="activeTabUnderline"
-                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground"
-                  initial={false}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      <TabNavigation
+        tabs={tabs}
+        activeTab={contentType}
+        onTabChange={onTabChange || (() => {})}
+        onPrefetch={prefetchTab}
+      />
 
-      {/* Results Count */}
       <div className="mb-2 px-1 mt-6">
         <div className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
           {totalNumberOfItems !== undefined ? (
@@ -231,69 +167,13 @@ export function SearchResults({
         </div>
       </div>
 
-      {/* Content Area */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
       >
-        {contentType === "tracks" && tracks && tracks.length > 50 && windowDimensions.width > 0 ? (
-          <VirtualTrackList
-            tracks={tracks}
-            height={windowDimensions.height - 200}
-            width={windowDimensions.width}
-          />
-        ) : contentType === "tracks" ? (
-          <div className="border-t border-foreground/10">
-            {/* Table header - desktop only */}
-            <div className="sticky top-[4.8rem] z-10 hidden lg:block">
-              <TableHeader />
-            </div>
-            <div>
-              {tracks?.map((track, index) => {
-                const isCurrentTrack = currentTrack?.id === track.id;
-
-                // Use MobileTrackRow on mobile, TrackRow on desktop
-                if (isMobile) {
-                  return (
-                    <MobileTrackRow
-                      key={`${track.id}-${index}`}
-                      track={track}
-                      index={index}
-                      isCurrentTrack={isCurrentTrack}
-                      isPlaying={isCurrentTrack && isPlaying}
-                      isLoading={loadingTrackId === track.id}
-                      onClick={() => handleTrackClick(track, index)}
-                      onAddToQueue={() => {
-                        // Add to queue functionality
-                      }}
-                      onShare={() => {
-                        // Share functionality
-                        if (navigator.share) {
-                          navigator.share({
-                            title: track.title,
-                            text: `Check out ${track.title} by ${track.artist?.name}`,
-                          });
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                return (
-                  <TrackRow
-                    key={`${track.id}-${index}`}
-                    track={track}
-                    index={index}
-                    isCurrentTrack={isCurrentTrack}
-                    isPlaying={isCurrentTrack && isPlaying}
-                    isLoading={loadingTrackId === track.id}
-                    onClick={() => handleTrackClick(track, index)}
-                  />
-                );
-              })}
-            </div>
-          </div>
+        {contentType === "tracks" && tracks ? (
+          <TrackResults tracks={tracks} />
         ) : contentType === "albums" &&
           albums &&
           albums.length > 50 &&
