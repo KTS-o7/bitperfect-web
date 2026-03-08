@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { api } from "@/lib/api";
 
 interface Artist {
   id: number;
@@ -17,10 +18,7 @@ interface ArtistCardProps {
 
 function ArtistCard({ artist }: ArtistCardProps) {
   const pictureUrl = artist.picture
-    ? `https://resources.tidal.com/images/${artist.picture.replace(
-      /-/g,
-      "/"
-    )}/750x750.jpg`
+    ? api.getCoverUrl(artist.picture, "750")
     : "/placeholder-artist.svg";
 
   return (

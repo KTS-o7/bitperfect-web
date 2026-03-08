@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useLyrics } from "@/hooks/useLyrics";
 import { Track, LyricsData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
+import { getCoverUrl } from "@/lib/api/utils";
 import "@/styles/lyrics.css";
 
 interface KaraokeViewProps {
@@ -50,16 +51,15 @@ export function FullscreenLyrics({
   return () => window.removeEventListener("keydown", handleKeyDown);
  }, [onClose]);
 
- const getCoverUrl = (size: "large" | "thumb" = "large") => {
-  const coverId = track?.album?.cover || track?.album?.id;
-  if (!coverId) return null;
-  const formattedId = String(coverId).replace(/-/g, "/");
-  return `https://resources.tidal.com/images/${formattedId}/${size === "large" ? "1280x1280" : "640x640"}.jpg`;
- };
+const getCoverUrlFn = (size: "large" | "thumb" = "large") => {
+   const coverId = track?.album?.cover || track?.album?.id;
+   if (!coverId) return null;
+   return getCoverUrl(coverId, size === "large" ? "1280" : "640");
+  };
 
  if (!isOpen) return null;
 
- const coverUrl = getCoverUrl("large");
+ const coverUrl = getCoverUrlFn("large");
 
  const content = (
   <div

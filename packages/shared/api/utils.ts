@@ -175,3 +175,21 @@ export const hasExplicitContent = (item: Track | Album | Playlist): boolean => {
   }
   return item.explicit === true;
 };
+
+const TIDAL_COVER_BASE_URL = "https://resources.tidal.com/images";
+
+export function getCoverUrl(coverId: string | number | undefined, size: string = "320"): string {
+  if (!coverId) return "";
+  
+  const coverIdStr = String(coverId);
+  const formattedId = coverIdStr.replace(/-/g, "/");
+  
+  return `${TIDAL_COVER_BASE_URL}/${formattedId}/${size}x${size}.jpg`;
+}
+
+export function getCoverUrlBySize(
+  coverId: string | number | undefined,
+  size: "80" | "160" | "320" | "640" | "1280" = "320"
+): string {
+  return getCoverUrl(coverId, size);
+}

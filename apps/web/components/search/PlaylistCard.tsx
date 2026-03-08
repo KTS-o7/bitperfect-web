@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { api } from "@/lib/api";
 
 interface Playlist {
   uuid: string;
@@ -23,11 +24,10 @@ interface PlaylistCardProps {
 }
 
 function PlaylistCard({ playlist }: PlaylistCardProps) {
+  const coverImage = playlist.squareImage || playlist.image;
   const coverUrl =
-    playlist.squareImage || playlist.image
-      ? `https://resources.tidal.com/images/${(
-        playlist.squareImage || playlist.image
-      )?.replace(/-/g, "/")}/750x750.jpg`
+    coverImage
+      ? api.getCoverUrl(coverImage, "750")
       : "/placeholder-playlist.png";
 
   const formatDuration = (seconds: number) => {

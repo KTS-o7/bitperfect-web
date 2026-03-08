@@ -1,7 +1,7 @@
 "use client";
 
 import { useAudioPlayer, useQueue } from "@/contexts/AudioPlayerContext";
-import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
+import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
 import { X, Music2, GripVertical } from "lucide-react";
 import { useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -65,8 +65,7 @@ function SortableQueueItem({
   const coverUrl = useMemo(() => {
     const coverId = track?.album?.cover || track?.album?.id;
     if (!coverId) return null;
-    const formattedId = String(coverId).replace(/-/g, "/");
-    return `https://resources.tidal.com/images/${formattedId}/160x160.jpg`;
+    return getCoverUrl(coverId, "160");
   }, [track?.album?.cover, track?.album?.id]);
 
   return (

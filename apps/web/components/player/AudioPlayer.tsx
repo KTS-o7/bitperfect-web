@@ -5,7 +5,7 @@ import {
   usePlaybackState,
   useQueue,
 } from "@/contexts/AudioPlayerContext";
-import { formatTime, getTrackTitle, getTrackArtists } from "@/lib/api/utils";
+import { formatTime, getTrackTitle, getTrackArtists, getCoverUrl } from "@/lib/api/utils";
 import {
   Play,
   Pause,
@@ -129,11 +129,10 @@ export function AudioPlayer() {
 
   const formattedDuration = useMemo(() => formatTime(duration), [duration]);
 
-  const getCoverUrl = useCallback(() => {
+  const getCoverUrlFn = useCallback(() => {
     const coverId = currentTrack?.album?.cover || currentTrack?.album?.id;
     if (!coverId) return null;
-    const formattedId = String(coverId).replace(/-/g, "/");
-    return `https://resources.tidal.com/images/${formattedId}/160x160.jpg`;
+    return getCoverUrl(coverId, "160");
   }, [currentTrack]);
 
   const handleSegmentClick = useCallback(
@@ -187,7 +186,7 @@ export function AudioPlayer() {
 
   if (!currentTrack) return null;
 
-  const coverUrl = getCoverUrl();
+  const coverUrl = getCoverUrlFn();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-foreground/20 z-50">

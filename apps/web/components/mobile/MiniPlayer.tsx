@@ -1,7 +1,7 @@
 "use client";
 
 import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { getTrackTitle, getTrackArtists } from "@/lib/api/utils";
+import { getTrackTitle, getTrackArtists, getCoverUrl } from "@/lib/api/utils";
 import { Play, Pause, SkipForward, ChevronUp, Heart } from "lucide-react";
 import { motion, PanInfo, useAnimation } from "motion/react";
 import Image from "next/image";
@@ -23,11 +23,10 @@ export function MiniPlayer({ onExpand }: MiniPlayerProps) {
 
   const liked = currentTrack ? isLiked(currentTrack.id) : false;
 
-  const getCoverUrl = useCallback(() => {
+  const getCoverUrlFn = useCallback(() => {
     const coverId = currentTrack?.album?.cover || currentTrack?.album?.id;
     if (!coverId) return null;
-    const formattedId = String(coverId).replace(/-/g, "/");
-    return `https://resources.tidal.com/images/${formattedId}/160x160.jpg`;
+    return getCoverUrl(coverId, "160");
   }, [currentTrack]);
 
   const handlePlayPause = useCallback(
@@ -67,7 +66,7 @@ export function MiniPlayer({ onExpand }: MiniPlayerProps) {
 
   if (!currentTrack) return null;
 
-  const coverUrl = getCoverUrl();
+  const coverUrl = getCoverUrlFn();
 
   return (
     <motion.div

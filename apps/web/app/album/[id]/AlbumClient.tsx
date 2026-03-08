@@ -9,7 +9,7 @@ import {
   useQueue,
 } from "@/contexts/AudioPlayerContext";
 import { Play, Pause, Music2, Heart } from "lucide-react";
-import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
+import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
 import { AudioPlayer } from "@/components/player/AudioPlayer";
 import { Header } from "@/components/layout/Header";
 import { usePersistence } from "@/contexts/PersistenceContext";
@@ -54,10 +54,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
   };
 
   const coverUrl = album?.cover
-    ? `https://resources.tidal.com/images/${album.cover.replace(
-      /-/g,
-      "/"
-    )}/1280x1280.jpg`
+    ? getCoverUrl(album.cover, "1280")
     : null;
 
   const artistName =
