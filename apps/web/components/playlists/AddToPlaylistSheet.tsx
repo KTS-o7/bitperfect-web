@@ -5,7 +5,7 @@ import { usePersistence } from "@/contexts/PersistenceContext";
 import { Track } from "@bitperfect/shared/api";
 import { ListMusic, Plus, Check, X } from "lucide-react";
 import { CreatePlaylistModal } from "./CreatePlaylistModal";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
 interface AddToPlaylistSheetProps {
     track: Track | null;
@@ -16,6 +16,7 @@ interface AddToPlaylistSheetProps {
 export function AddToPlaylistSheet({ track, isOpen, onClose }: AddToPlaylistSheetProps) {
     const { playlists, addTrackToPlaylist } = usePersistence();
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const shouldReduceMotion = useReducedMotion();
 
     const handleAddToPlaylist = (playlistId: string) => {
         if (track) {
@@ -23,6 +24,10 @@ export function AddToPlaylistSheet({ track, isOpen, onClose }: AddToPlaylistShee
             onClose();
         }
     };
+
+    const springTransition = shouldReduceMotion
+        ? { duration: 0 as const }
+        : { type: "spring" as const, damping: 25, stiffness: 300 };
 
     return (
         <>
@@ -35,18 +40,22 @@ export function AddToPlaylistSheet({ track, isOpen, onClose }: AddToPlaylistShee
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 bg-black/60 z-[200]"
                             onClick={onClose}
+                            aria-hidden="true"
                         />
                         <motion.div
-                            initial={{ opacity: 0, y: 100 }}
+                            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 100 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 100 }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                            className="fixed bottom-0 left-0 right-0 z-[201] bg-black border-t border-white/10 max-h-[70vh] flex flex-col"
+                            exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 100 }}
+                            transition={springTransition}
+                            className="fixed bottom-0 left-0 right-0 z-[201] bg-black border-t border-white/10 max-h-[70vh] flex flex-col touch-manipulation"
                             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Add to playlist"
                         >
                             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                                 <h3 className="text-sm font-medium">Add to Playlist</h3>
-                                <button onClick={onClose} className="p-1">
+                                <button onClick={onClose} className="p-1" aria-label="Close">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>

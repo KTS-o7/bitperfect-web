@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { X } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
 interface CreatePlaylistModalProps {
     isOpen: boolean;
@@ -14,6 +14,11 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const { createPlaylist } = usePersistence();
+    const shouldReduceMotion = useReducedMotion();
+
+    const springTransition = shouldReduceMotion
+        ? { duration: 0 as const }
+        : { type: "spring" as const, damping: 25, stiffness: 300 };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,18 +40,22 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                         exit={{ opacity: 0 }}
                         className="fixed inset-0 bg-black/80 z-[250] md:hidden"
                         onClick={onClose}
+                        aria-hidden="true"
                     />
                     <motion.div
-                        initial={{ opacity: 0, y: 100 }}
+                        initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 100 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 100 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="fixed bottom-0 left-0 right-0 z-[251] bg-black border-t border-white/10 md:hidden"
+                        exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 100 }}
+                        transition={springTransition}
+                        className="fixed bottom-0 left-0 right-0 z-[251] bg-black border-t border-white/10 md:hidden touch-manipulation"
                         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Create playlist"
                     >
                         <div className="flex items-center justify-between p-4 border-b border-white/10">
                             <h2 className="text-sm font-medium">Create Playlist</h2>
-                            <button onClick={onClose} className="p-1">
+                            <button onClick={onClose} className="p-1" aria-label="Close">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -107,11 +116,11 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                     </motion.div>
 
                     {/* Desktop Modal */}
-                    <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/80">
-                        <div className="w-full max-w-md mx-4 bg-black border border-white/10 p-6">
+                    <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/80 overflow-y-auto">
+                        <div className="w-full max-w-md mx-4 my-8 bg-black border border-white/10 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-sm font-medium">Create Playlist</h2>
-                                <button onClick={onClose} className="p-1 hover:text-white/70">
+                                <button onClick={onClose} className="p-1 hover:text-white/70" aria-label="Close">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
