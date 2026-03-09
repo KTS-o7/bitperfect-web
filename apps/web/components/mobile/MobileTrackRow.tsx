@@ -6,9 +6,10 @@ import { Track } from "@/lib/api/types";
 import { getTrackTitle, formatTime } from "@/lib/api/utils";
 import { api } from "@/lib/api";
 import Image from "next/image";
-import { Disc, MoreVertical, Play, ListPlus, Share2, Download, Loader2 } from "lucide-react";
+import { Disc, MoreVertical, Play, ListPlus, Share2, Download, Loader2, ListMusic } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useDownload } from "@/hooks/useDownload";
+import { useAddToPlaylist } from "@/contexts/AddToPlaylistContext";
 
 interface MobileTrackRowProps {
   track: Track;
@@ -38,6 +39,7 @@ function MobileTrackRow({
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
   const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
   const isThisDownloading = isDownloading && downloadingTrackId === track.id;
+  const { open: openAddToPlaylist } = useAddToPlaylist();
 
   // Memoize cover URL computation
   const coverUrl = useMemo(() => {
@@ -111,7 +113,7 @@ function MobileTrackRow({
   }, [showContextMenu, onClick]);
 
   const handleContextMenuAction = useCallback(
-    (action: "play" | "queue" | "share" | "download") => {
+    (action: "play" | "queue" | "share" | "download" | "playlist") => {
       setShowContextMenu(false);
       switch (action) {
         case "play":
@@ -126,9 +128,12 @@ function MobileTrackRow({
         case "download":
           downloadTrack(track);
           break;
+        case "playlist":
+          openAddToPlaylist(track);
+          break;
       }
     },
-    [onClick, onAddToQueue, onShare, downloadTrack, track],
+    [onClick, onAddToQueue, onShare, downloadTrack, track, openAddToPlaylist],
   );
 
   return (
@@ -292,6 +297,14 @@ function MobileTrackRow({
                   >
                     <ListPlus className="w-4 h-4 text-white/60" />
                     <span className="text-[13px] text-white">Add to Queue</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleContextMenuAction("playlist")}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 active:bg-white/5"
+                  >
+                    <ListMusic className="w-4 h-4 text-white/60" />
+                    <span className="text-[13px] text-white">Add to Playlist</span>
                   </button>
 
                   <button
