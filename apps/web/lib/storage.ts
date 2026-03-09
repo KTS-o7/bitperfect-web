@@ -1,5 +1,15 @@
 import { Track, Album } from "@bitperfect/shared/api";
 
+export interface Playlist {
+    id: string;
+    name: string;
+    description?: string;
+    trackIds: number[];
+    createdAt: string;
+    updatedAt: string;
+    coverArt?: string;
+}
+
 export interface UserSettings {
     quality: "LOW" | "HIGH" | "LOSSLESS";
     apiInstance?: string;
@@ -9,6 +19,7 @@ export interface UserData {
     likedTracks: Track[];
     history: Track[];
     savedAlbums: Album[];
+    playlists: Playlist[];
     settings: UserSettings;
 }
 
@@ -22,6 +33,7 @@ export const DEFAULT_USER_DATA: UserData = {
     likedTracks: [],
     history: [],
     savedAlbums: [],
+    playlists: [],
     settings: DEFAULT_SETTINGS,
 };
 
