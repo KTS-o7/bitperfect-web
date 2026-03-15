@@ -1,9 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { storage, UserData, DEFAULT_USER_DATA, Playlist } from "@/lib/storage";
 import { Track, Album } from "@bitperfect/shared/api";
 import { useToast } from "./ToastContext";
+import { useAuth } from "./AuthContext";
+import { syncToCloud } from "@/lib/db/sync";
 
 interface PersistenceContextType extends UserData {
     toggleLikeTrack: (track: Track) => void;
@@ -28,12 +30,17 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     const [data, setData] = useState<UserData>(DEFAULT_USER_DATA);
     const [isLoaded, setIsLoaded] = useState(false);
     const { success, toast } = useToast();
+    const { isAuthenticated } = useAuth();
+    const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load from storage on mount
     useEffect(() => {
         setData(storage.load());
         setIsLoaded(true);
     }, []);
+
+    // Note: Sync is now manual only (on login/logout and via button)
+    // to avoid hitting rate limits
 
     // Save to storage whenever data changes
     useEffect(() => {
@@ -107,10 +114,11 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
 
     const createPlaylist = useCallback((name: string, description?: string) => {
         const newPlaylist: Playlist = {
-            id: `playlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: crypto.randomUUID(),
             name,
             description,
             trackIds: [],
+            tracks: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
@@ -142,13 +150,28 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
                 return prev;
             }
 
+            // Extract minimal track data for storage
+            const playlistTrack = {
+                id: track.id,
+                title: track.title,
+                duration: track.duration,
+                artist: track.artist,
+                artists: track.artists,
+                album: track.album,
+            };
+
+            // Only save cover if it's a valid string
+            const newCoverArt = track.album?.cover;
+            const isValidCover = typeof newCoverArt === 'string' && newCoverArt.length > 0;
+
             const updatedPlaylists = prev.playlists.map((p) =>
                 p.id === playlistId
                     ? {
                         ...p,
                         trackIds: [...p.trackIds, track.id],
+                        tracks: [...(p.tracks || []), playlistTrack],
                         updatedAt: new Date().toISOString(),
-                        coverArt: p.coverArt || track.album?.cover,
+                        coverArt: p.coverArt || (isValidCover ? newCoverArt : undefined),
                     }
                     : p
             );
@@ -167,6 +190,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
                     ? {
                         ...p,
                         trackIds: p.trackIds.filter((id) => id !== trackId),
+                        tracks: (p.tracks || []).filter((t) => t.id !== trackId),
                         updatedAt: new Date().toISOString(),
                     }
                     : p

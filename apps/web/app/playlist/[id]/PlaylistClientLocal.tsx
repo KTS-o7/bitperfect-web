@@ -1,14 +1,16 @@
+// apps/web/app/playlist/[id]/PlaylistClientLocal.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { usePersistence } from "@/contexts/PersistenceContext";
-import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { Header } from "@/components/layout/Header";
 import { Track } from "@bitperfect/shared/api";
 import { ListMusic, Play, Share2, Trash2, MoreVertical, Heart, Camera } from "lucide-react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { formatTime, getTrackTitle, getTrackArtists } from "@/lib/api/utils";
 import { generateShareUrl } from "@/lib/shareLinks";
+import { getPlaylistColor, PlaylistTrack } from "@/lib/storage";
+import { getCoverUrl } from "@/lib/api/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { PlaylistQRCode } from "@/components/playlists/PlaylistQRCode";
 import { QRScanner } from "@/components/playlists/QRScanner";
@@ -18,9 +20,20 @@ interface PlaylistClientProps {
     playlistId: string;
 }
 
+// Convert stored PlaylistTrack to Track format
+function convertToTrack(playlistTrack: PlaylistTrack): Track {
+    return {
+        id: playlistTrack.id,
+        title: playlistTrack.title,
+        duration: playlistTrack.duration,
+        artist: playlistTrack.artist,
+        artists: playlistTrack.artists,
+        album: playlistTrack.album,
+    } as Track;
+}
+
 export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const { getPlaylist, deletePlaylist, removeTrackFromPlaylist, toggleLikeTrack, isLiked } = usePersistence();
-    const { tracks, isLoading, loadTracks } = usePlaylistTracks();
     const { setQueue } = useAudioPlayer();
     const { success } = useToast();
     const [playlist, setPlaylist] = useState(() => getPlaylist(playlistId));
@@ -29,10 +42,15 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const [showScanner, setShowScanner] = useState(false);
 
     useEffect(() => {
-        if (playlist) {
-            loadTracks(playlist.trackIds);
+        // Refresh playlist data when it changes in persistence
+        const refreshedPlaylist = getPlaylist(playlistId);
+        if (refreshedPlaylist) {
+            setPlaylist(refreshedPlaylist);
         }
-    }, [playlist, loadTracks]);
+    }, [playlistId, getPlaylist]);
+
+    // Convert stored tracks to Track format
+    const tracks = playlist?.tracks?.map(convertToTrack) || [];
 
     const handlePlayAll = useCallback(() => {
         if (tracks.length > 0) {
@@ -68,11 +86,13 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
             <div className="min-h-screen">
                 <Header showBack />
                 <div className="max-w-6xl mx-auto px-6 py-8">
-                    <p className="text-white/50">Playlist not found</p>
+                    <p className="text-foreground/50">Playlist not found</p>
                 </div>
             </div>
         );
     }
+
+    const firstLetter = playlist.name.charAt(0).toUpperCase();
 
     return (
         <div className="relative min-h-screen w-full bg-background text-foreground transition-colors duration-300">
@@ -80,36 +100,41 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
 
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <div className="flex flex-col md:flex-row gap-6 mb-8">
-                    <div className="w-40 h-40 bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <div className={`w-40 h-40 bg-gradient-to-br ${getPlaylistColor(playlist.name)} border border-foreground/10 flex items-center justify-center shrink-0`}>
                         {playlist.coverArt ? (
                             <img
-                                src={playlist.coverArt}
+                                src={getCoverUrl(playlist.coverArt, "320")}
                                 alt=""
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    // Hide image on error, show first letter instead
+                                    e.currentTarget.style.display = 'none';
+                                }}
                             />
-                        ) : (
-                            <ListMusic className="w-16 h-16 text-white/20" />
+                        ) : null}
+                        {!playlist.coverArt && (
+                            <span className="text-5xl font-bold text-white/90">{firstLetter}</span>
                         )}
                     </div>
 
                     <div className="flex-1">
-                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mb-2">
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-foreground/40 mb-2">
                             Playlist
                         </p>
                         <h1 className="text-3xl font-medium mb-2">{playlist.name}</h1>
                         {playlist.description && (
-                            <p className="text-sm text-white/60 mb-4">{playlist.description}</p>
+                            <p className="text-sm text-foreground/60 mb-4">{playlist.description}</p>
                         )}
-                        <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">
+                        <p className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
                             {playlist.trackIds.length} tracks
                         </p>
 
-                        <div className="flex gap-3 mt-6">
+                        <div className="flex flex-wrap gap-3 mt-6">
                             <button
                                 onClick={handlePlayAll}
                                 disabled={tracks.length === 0}
-                                className="flex items-center gap-2 px-6 py-2 border border-white 
-                                           hover:bg-white/10 disabled:opacity-50 text-[10px] 
+                                className="flex items-center gap-2 px-6 py-2 border border-foreground 
+                                           hover:bg-foreground/10 disabled:opacity-50 text-[10px] 
                                            font-mono uppercase tracking-widest"
                             >
                                 <Play className="w-4 h-4" />
@@ -117,8 +142,8 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
                             </button>
                             <button
                                 onClick={handleShare}
-                                className="flex items-center gap-2 px-4 py-2 border border-white/20 
-                                           hover:border-white/40 text-[10px] 
+                                className="flex items-center gap-2 px-4 py-2 border border-foreground/20 
+                                           hover:border-foreground/40 text-[10px] 
                                            font-mono uppercase tracking-widest"
                             >
                                 <Share2 className="w-4 h-4" />
@@ -126,63 +151,53 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
                             </button>
                             <button
                                 onClick={() => setShowScanner(true)}
-                                className="flex items-center gap-2 px-4 py-2 border border-white/20 
-                                           hover:border-white/40 text-[10px] 
+                                className="flex items-center gap-2 px-4 py-2 border border-foreground/20 
+                                           hover:border-foreground/40 text-[10px] 
                                            font-mono uppercase tracking-widest"
                             >
                                 <Camera className="w-4 h-4" />
                                 Scan
                             </button>
-                            <button
-                                onClick={() => setShowMenu(!showMenu)}
-                                className="p-2 border border-white/20 hover:border-white/40"
-                            >
-                                <MoreVertical className="w-4 h-4" />
-                            </button>
-                        </div>
-
-                        {showMenu && (
-                            <div className="mt-2 w-48 bg-black border border-white/10">
+                            <div className="relative">
                                 <button
-                                    onClick={handleDelete}
-                                    className="w-full flex items-center gap-2 px-4 py-3 text-left 
-                                               hover:bg-red-500/10 text-red-500 text-[10px] 
-                                               font-mono uppercase tracking-widest"
+                                    onClick={() => setShowMenu(!showMenu)}
+                                    className="p-2 border border-foreground/20 hover:border-foreground/40"
+                                    aria-label="More options"
                                 >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Playlist
+                                    <MoreVertical className="w-4 h-4" />
                                 </button>
+                                {showMenu && (
+                                    <div className="absolute right-0 mt-2 w-48 border border-foreground/10 bg-background shadow-lg z-10">
+                                        <button
+                                            onClick={() => {
+                                                handleDelete();
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-500 
+                                                       hover:bg-foreground/5 text-[10px] font-mono uppercase tracking-widest"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete Playlist
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
 
-                <div className="border border-white/10">
-                    <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_200px_80px_40px] 
-                                    gap-4 px-6 py-3 border-b border-white/10 bg-white/[0.02]">
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
-                            #
-                        </span>
-                        <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
-                            Title
-                        </span>
-                        <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest 
-                                        text-white/40">
-                            Artists
-                        </span>
-                        <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest 
-                                        text-white/40 text-right">
-                            Time
-                        </span>
-                        <span></span>
+                <div className="border border-foreground/10">
+                    {/* Header */}
+                    <div className="flex gap-4 px-6 py-3 border-b border-foreground/10 bg-foreground/[0.02] text-[10px] font-mono uppercase tracking-widest text-foreground/40">
+                        <span className="w-8 text-center">#</span>
+                        <span className="flex-1">Title</span>
+                        <span className="hidden lg:block w-48">Artists</span>
+                        <span className="hidden lg:block w-20 text-right">Time</span>
+                        <span className="w-20 text-right"></span>
                     </div>
 
-                    {isLoading ? (
-                        <div className="p-8 text-center text-white/40 text-[10px] font-mono uppercase tracking-widest">
-                            Loading tracks...
-                        </div>
-                    ) : tracks.length === 0 ? (
-                        <div className="p-8 text-center text-white/40 text-[10px] font-mono uppercase tracking-widest">
+                    {tracks.length === 0 ? (
+                        <div className="p-8 text-center text-foreground/40 text-[10px] font-mono uppercase tracking-widest">
                             No tracks in this playlist
                         </div>
                     ) : (
@@ -238,27 +253,23 @@ function PlaylistTrackRow({
 }) {
     return (
         <div
-            className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_200px_80px_40px] 
-                        gap-4 items-center px-6 py-3 border-b border-white/10 
-                        last:border-0 cursor-pointer hover:bg-white/[0.02]"
+            className="flex gap-4 items-center px-6 py-3 border-b border-foreground/10 
+                        last:border-0 cursor-pointer hover:bg-foreground/[0.02]"
             onClick={onPlay}
         >
-            <div className="text-center font-mono text-xs text-white/40">
+            <div className="w-8 text-center font-mono text-xs text-foreground/40">
                 {String(index + 1).padStart(2, "0")}
             </div>
-            <div className="min-w-0">
+            <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{getTrackTitle(track)}</div>
-                <div className="text-xs text-white/50 truncate md:hidden">
-                    {getTrackArtists(track)}
-                </div>
             </div>
-            <div className="hidden lg:block text-xs text-white/40 truncate">
+            <div className="hidden lg:block w-48 text-xs text-foreground/40 truncate">
                 {getTrackArtists(track)}
             </div>
-            <div className="hidden lg:block text-right font-mono text-xs text-white/40 tabular-nums">
+            <div className="hidden lg:block w-20 text-right font-mono text-xs text-foreground/40 tabular-nums">
                 {formatTime(track.duration)}
             </div>
-            <div className="text-right flex items-center justify-end gap-2">
+            <div className="w-20 flex items-center justify-end gap-2">
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -267,11 +278,10 @@ function PlaylistTrackRow({
                     className="p-2 transition-transform active:scale-95 group/heart"
                 >
                     <Heart
-                        className={`w-3.5 h-3.5 transition-all ${
-                            isLiked
-                                ? "fill-red-500 text-red-500 scale-110"
-                                : "text-white/20 group-hover/heart:text-white/40"
-                        }`}
+                        className={`w-4 h-4 transition-all ${isLiked
+                            ? "fill-red-500 text-red-500 scale-110"
+                            : "text-foreground/20 group-hover/heart:text-foreground/40 group-hover/heart:scale-110"
+                            }`}
                     />
                 </button>
                 <button
@@ -279,7 +289,7 @@ function PlaylistTrackRow({
                         e.stopPropagation();
                         onRemove();
                     }}
-                    className="p-2 text-white/20 hover:text-red-500 transition-colors"
+                    className="p-2 text-foreground/20 hover:text-red-500 transition-colors"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>

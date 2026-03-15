@@ -5,7 +5,7 @@ import React from "react";
 export function TableHeader() {
   return (
     <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/10">
-      <div className="grid grid-cols-[50px_40px_1fr_180px_120px_80px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px] md:grid-cols-[40px_40px_1fr_60px] gap-4 px-6 py-3">
+      <div className="grid grid-cols-[50px_40px_1fr_180px_120px_80px_100px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_100px] md:grid-cols-[40px_40px_1fr_60px] gap-4 px-6 py-3">
         {/* Track Number */}
         <div className="text-center">
           <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
@@ -43,6 +43,9 @@ export function TableHeader() {
             TIME
           </span>
         </div>
+
+        {/* Actions */}
+        <div></div>
       </div>
     </div>
   );

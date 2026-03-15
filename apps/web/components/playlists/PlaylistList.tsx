@@ -1,7 +1,8 @@
 "use client";
 
 import { usePersistence } from "@/contexts/PersistenceContext";
-import { Playlist } from "@/lib/storage";
+import { Playlist, getPlaylistColor } from "@/lib/storage";
+import { getCoverUrl } from "@/lib/api/utils";
 import { ListMusic, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -16,10 +17,10 @@ export function PlaylistList({ onCreateClick }: PlaylistListProps) {
         <div className="space-y-4">
             <button
                 onClick={onCreateClick}
-                className="w-full flex items-center gap-3 p-4 border border-dashed border-white/20 
-                           hover:border-white/40 transition-colors text-left"
+                className="w-full flex items-center gap-3 p-4 border border-dashed border-foreground/20 
+                           hover:border-foreground/40 transition-colors text-left"
             >
-                <Plus className="w-5 h-5 text-white/40" />
+                <Plus className="w-5 h-5 text-foreground/40" />
                 <span className="text-[10px] font-mono uppercase tracking-widest">Create New Playlist</span>
             </button>
 
@@ -33,35 +34,42 @@ export function PlaylistList({ onCreateClick }: PlaylistListProps) {
 }
 
 function PlaylistCard({ playlist }: { playlist: Playlist }) {
+    const gradientColor = getPlaylistColor(playlist.name);
+    const firstLetter = playlist.name.charAt(0).toUpperCase();
+
     return (
         <Link
             href={`/playlist/${playlist.id}`}
-            className="group block p-4 border border-white/10 hover:border-white/30 
-                       transition-all hover:bg-white/[0.02]"
+            className="group block p-4 border border-foreground/10 hover:border-foreground/30 
+                       transition-all hover:bg-foreground/[0.02]"
         >
             <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-white/5 border border-white/10 
-                                flex items-center justify-center shrink-0">
+                <div className={`w-16 h-16 bg-gradient-to-br ${gradientColor} border border-foreground/10 
+                                flex items-center justify-center shrink-0`}>
                     {playlist.coverArt ? (
                         <img
-                            src={playlist.coverArt}
+                            src={getCoverUrl(playlist.coverArt, "160")}
                             alt=""
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                            }}
                         />
-                    ) : (
-                        <ListMusic className="w-6 h-6 text-white/20" />
+                    ) : null}
+                    {!playlist.coverArt && (
+                        <span className="text-2xl font-bold text-white/90">{firstLetter}</span>
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium truncate group-hover:text-white/90">
+                    <h3 className="text-sm font-medium truncate group-hover:text-foreground/90">
                         {playlist.name}
                     </h3>
-                    <p className="text-[10px] font-mono uppercase tracking-widest text-white/40 mt-1">
+                    <p className="text-[10px] font-mono uppercase tracking-widest text-foreground/40 mt-1">
                         {playlist.trackIds.length} tracks
                     </p>
                     {playlist.description && (
-                        <p className="text-[10px] text-white/30 truncate mt-1">
+                        <p className="text-[10px] text-foreground/30 truncate mt-1">
                             {playlist.description}
                         </p>
                     )}

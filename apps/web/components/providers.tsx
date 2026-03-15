@@ -5,6 +5,7 @@ import { PersistenceProvider } from "@/contexts/PersistenceContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { AddToPlaylistProvider, useAddToPlaylist } from "@/contexts/AddToPlaylistContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
@@ -22,20 +23,22 @@ export function Providers({ children }: { children: ReactNode }) {
     <MotionConfig reducedMotion="user">
       <QueryProvider>
         <ToastProvider>
-          <PersistenceProvider>
-            <AddToPlaylistProvider>
-              <SearchProvider>
-                <ThemeProvider>
-                  <ErrorBoundary>
-                    <AudioPlayerProvider>
+          <AuthProvider>
+            <PersistenceProvider>
+              <AddToPlaylistProvider>
+                <SearchProvider>
+                  <ThemeProvider>
+                    <ErrorBoundary>
+                      <AudioPlayerProvider>
                         {children}
                         <AddToPlaylistWrapper />
-                    </AudioPlayerProvider>
-                  </ErrorBoundary>
-                </ThemeProvider>
-              </SearchProvider>
-            </AddToPlaylistProvider>
-          </PersistenceProvider>
+                      </AudioPlayerProvider>
+                    </ErrorBoundary>
+                  </ThemeProvider>
+                </SearchProvider>
+              </AddToPlaylistProvider>
+            </PersistenceProvider>
+          </AuthProvider>
         </ToastProvider>
       </QueryProvider>
     </MotionConfig>

@@ -16,49 +16,16 @@ import React, {
 import { Track } from "@/lib/api/types";
 import { api } from "@/lib/api";
 import { usePersistence } from "./PersistenceContext";
-
-type RepeatMode = "off" | "all" | "one";
-
-interface AudioPlayerState {
-  currentTrack: Track | null;
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  volume: number;
-  isMuted: boolean;
-  queue: Track[];
-  currentQueueIndex: number;
-  shuffleActive: boolean;
-  repeatMode: RepeatMode;
-  currentQuality: string;
-  streamUrl: string | null;
-}
-
-interface AudioPlayerContextValue extends AudioPlayerState {
-  playTrack: (track: Track, streamUrl: string) => void;
-  addToQueue: (track: Track) => void;
-  setQueue: (tracks: Track[], startIndex?: number) => void;
-  reorderQueue: (newQueue: Track[], newCurrentIndex: number) => void;
-  play: () => void;
-  pause: () => void;
-  togglePlayPause: () => void;
-  playNext: () => void;
-  playPrev: () => void;
-  seek: (time: number) => void;
-  setVolume: (volume: number) => void;
-  toggleMute: () => void;
-  toggleShuffle: () => void;
-  toggleRepeat: () => void;
-  removeFromQueue: (index: number) => void;
-  clearQueue: () => void;
-  getAudioElement: () => HTMLAudioElement | null;
-  isStatsOpen: boolean;
-  setIsStatsOpen: Dispatch<SetStateAction<boolean>>;
-}
+import {
+  AudioPlayerState,
+  AudioPlayerContextValue,
+  RepeatMode,
+  PersistedState,
+} from "@/lib/audioPlayerTypes";
+import { getPersistedState, savePersistedState } from "@/lib/audioStorage";
+import { updateMediaSessionMetadata, updateMediaSessionPlaybackState } from "@/lib/mediaSession";
 
 const AudioPlayerContext = createContext<AudioPlayerContextValue | null>(null);
-
-const STORAGE_KEY = "audio-player-state";
 
 // Generate multiple artwork sizes for Media Session API
 function getMediaSessionArtwork(coverId: string | number | undefined): MediaImage[] {
@@ -80,39 +47,7 @@ function getMediaSessionArtwork(coverId: string | number | undefined): MediaImag
   }));
 }
 
-// Interface for what we persist to localStorage
-interface PersistedState {
-  volume: number;
-  isMuted: boolean;
-  shuffleActive: boolean;
-  repeatMode: RepeatMode;
-  queue: Track[];
-  currentQueueIndex: number;
-  currentTrack: Track | null;
-  currentTime: number;
-}
-
-// Helper function to load persisted state from localStorage
-function getPersistedState(): Partial<PersistedState> {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error(
-      "Failed to load audio player state from localStorage:",
-      error
-    );
-  }
-
-  return {};
-}
-
+// Export function AudioPlayerProvider for backward compatibility
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const { addToHistory } = usePersistence();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -179,25 +114,18 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     // Don't persist currentTime changes immediately - debounce them
     persistTimerRef.current = setTimeout(() => {
-      try {
-        const stateToPersist: PersistedState = {
-          volume: state.volume,
-          isMuted: state.isMuted,
-          shuffleActive: state.shuffleActive,
-          repeatMode: state.repeatMode,
-          queue: state.queue,
-          currentQueueIndex: state.currentQueueIndex,
-          currentTrack: state.currentTrack,
-          currentTime: state.currentTime,
-        };
+      const stateToPersist: PersistedState = {
+        volume: state.volume,
+        isMuted: state.isMuted,
+        shuffleActive: state.shuffleActive,
+        repeatMode: state.repeatMode,
+        queue: state.queue,
+        currentQueueIndex: state.currentQueueIndex,
+        currentTrack: state.currentTrack,
+        currentTime: state.currentTime,
+      };
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToPersist));
-      } catch (error) {
-        console.error(
-          "Failed to save audio player state to localStorage:",
-          error
-        );
-      }
+      savePersistedState(stateToPersist);
     }, 1000); // Debounce by 1 second
 
     return () => {
@@ -345,23 +273,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       streamUrl: streamUrl,
     }));
 
-    // Update Media Session metadata with multiple artwork sizes
-    if ("mediaSession" in navigator) {
-      const coverId = track.album?.cover || track.album?.id;
-      const artwork = getMediaSessionArtwork(coverId);
-      const artistName =
-        track.artist?.name ||
-        track.artists?.find((a) => a.type === "MAIN")?.name ||
-        track.artists?.[0]?.name ||
-        "Unknown Artist";
-
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title,
-        artist: artistName,
-        album: track.album?.title || "Unknown Album",
-        artwork,
-      });
-    }
+    updateMediaSessionMetadata(track);
   }, [safePlay]);
 
   const play = useCallback(async () => {
@@ -550,23 +462,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
             await safePlay(audioRef.current);
             addToHistory(track);
 
-            // Update Media Session metadata with multiple artwork sizes
-            if ("mediaSession" in navigator) {
-              const coverId = track.album?.cover || track.album?.id;
-              const artwork = getMediaSessionArtwork(coverId);
-              const artistName =
-                track.artist?.name ||
-                track.artists?.find((a) => a.type === "MAIN")?.name ||
-                track.artists?.[0]?.name ||
-                "Unknown Artist";
-
-              navigator.mediaSession.metadata = new MediaMetadata({
-                title: track.title,
-                artist: artistName,
-                album: track.album?.title || "Unknown Album",
-                artwork,
-              });
-            }
+            updateMediaSessionMetadata(track);
           }
         } catch (error) {
           console.error("Error playing next track:", error);
@@ -784,22 +680,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   // Update Media Session position state for progress display
   useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-
-    // Update playback state
-    navigator.mediaSession.playbackState = state.isPlaying ? "playing" : "paused";
-
-    // Update position state for progress indicator
-    if (state.duration > 0 && !isNaN(state.duration) && !isNaN(state.currentTime)) {
-      try {
-        navigator.mediaSession.setPositionState({
-          duration: state.duration,
-          playbackRate: 1,
-          position: Math.min(state.currentTime, state.duration),
-        });
-      } catch (error) {
-      }
-    }
+    updateMediaSessionPlaybackState(state.isPlaying, state.duration, state.currentTime);
   }, [state.isPlaying, state.currentTime, state.duration]);
 
   const getAudioElement = useCallback(() => {

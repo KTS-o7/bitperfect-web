@@ -47,13 +47,13 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 100 }}
                         transition={springTransition}
-                        className="fixed bottom-0 left-0 right-0 z-[251] bg-black border-t border-white/10 md:hidden touch-manipulation"
+                        className="fixed bottom-0 left-0 right-0 z-[251] bg-background border-t border-foreground/10 md:hidden touch-manipulation"
                         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
                         role="dialog"
                         aria-modal="true"
                         aria-label="Create playlist"
                     >
-                        <div className="flex items-center justify-between p-4 border-b border-white/10">
+                        <div className="flex items-center justify-between p-4 border-b border-foreground/10">
                             <h2 className="text-sm font-medium">Create Playlist</h2>
                             <button onClick={onClose} className="p-1" aria-label="Close">
                                 <X className="w-5 h-5" />
@@ -63,7 +63,7 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                         <form onSubmit={handleSubmit} className="p-4 space-y-4">
                             <div>
                                 <label className="block text-[10px] font-mono uppercase tracking-widest 
-                                                  text-white/40 mb-2">
+                                                  text-foreground/40 mb-2">
                                     Name
                                 </label>
                                 <input
@@ -71,15 +71,15 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="My Awesome Playlist"
-                                    className="w-full px-3 py-2 bg-transparent border border-white/20 
-                                               focus:border-white outline-none text-sm"
+                                    className="w-full px-3 py-2 bg-transparent border border-foreground/20 
+                                               focus:border-foreground outline-none text-sm"
                                     autoFocus
                                 />
                             </div>
 
                             <div>
                                 <label className="block text-[10px] font-mono uppercase tracking-widest 
-                                                  text-white/40 mb-2">
+                                                  text-foreground/40 mb-2">
                                     Description (optional)
                                 </label>
                                 <textarea
@@ -87,8 +87,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Add a description..."
                                     rows={2}
-                                    className="w-full px-3 py-2 bg-transparent border border-white/20 
-                                               focus:border-white outline-none text-sm resize-none"
+                                    className="w-full px-3 py-2 bg-transparent border border-foreground/20 
+                                               focus:border-foreground outline-none text-sm resize-none"
                                 />
                             </div>
 
@@ -96,8 +96,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 px-4 py-2 border border-white/20 
-                                               hover:border-white/40 text-[10px] 
+                                    className="flex-1 px-4 py-2 border border-foreground/20 
+                                               hover:border-foreground/40 text-[10px] 
                                                font-mono uppercase tracking-widest"
                                 >
                                     Cancel
@@ -105,8 +105,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                 <button
                                     type="submit"
                                     disabled={!name.trim()}
-                                    className="flex-1 px-4 py-2 border border-white 
-                                               hover:bg-white/10 disabled:opacity-50 text-[10px] 
+                                    className="flex-1 px-4 py-2 border border-foreground 
+                                               hover:bg-foreground/10 disabled:opacity-50 text-[10px] 
                                                font-mono uppercase tracking-widest"
                                 >
                                     Create
@@ -117,10 +117,10 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
 
                     {/* Desktop Modal */}
                     <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/80 overflow-y-auto">
-                        <div className="w-full max-w-md mx-4 my-8 bg-black border border-white/10 p-6">
+                        <div className="w-full max-w-md mx-4 my-8 bg-background border border-foreground/10 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-sm font-medium">Create Playlist</h2>
-                                <button onClick={onClose} className="p-1 hover:text-white/70" aria-label="Close">
+                                <button onClick={onClose} className="p-1 hover:text-foreground/70" aria-label="Close">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -128,7 +128,7 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-[10px] font-mono uppercase tracking-widest 
-                                                      text-white/40 mb-2">
+                                                      text-foreground/40 mb-2">
                                         Name
                                     </label>
                                     <input
@@ -136,15 +136,15 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="My Awesome Playlist"
-                                        className="w-full px-3 py-2 bg-transparent border border-white/20 
-                                                   focus:border-white outline-none text-sm"
+                                        className="w-full px-3 py-2 bg-transparent border border-foreground/20 
+                                                   focus:border-foreground outline-none text-sm"
                                         autoFocus
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-[10px] font-mono uppercase tracking-widest 
-                                                      text-white/40 mb-2">
+                                                      text-foreground/40 mb-2">
                                         Description (optional)
                                     </label>
                                     <textarea
@@ -152,8 +152,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Add a description..."
                                         rows={3}
-                                        className="w-full px-3 py-2 bg-transparent border border-white/20 
-                                                   focus:border-white outline-none text-sm resize-none"
+                                        className="w-full px-3 py-2 bg-transparent border border-foreground/20 
+                                                   focus:border-foreground outline-none text-sm resize-none"
                                     />
                                 </div>
 
@@ -161,8 +161,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="flex-1 px-4 py-2 border border-white/20 
-                                                   hover:border-white/40 text-[10px] 
+                                        className="flex-1 px-4 py-2 border border-foreground/20 
+                                                   hover:border-foreground/40 text-[10px] 
                                                    font-mono uppercase tracking-widest"
                                     >
                                         Cancel
@@ -170,8 +170,8 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                                     <button
                                         type="submit"
                                         disabled={!name.trim()}
-                                        className="flex-1 px-4 py-2 border border-white 
-                                                   hover:bg-white/10 disabled:opacity-50 text-[10px] 
+                                        className="flex-1 px-4 py-2 border border-foreground 
+                                                   hover:bg-foreground/10 disabled:opacity-50 text-[10px] 
                                                    font-mono uppercase tracking-widest"
                                     >
                                         Create

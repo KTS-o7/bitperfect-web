@@ -66,11 +66,11 @@ function TrackRow({
     <div
       onClick={onClick}
       className={`
-        group relative grid grid-cols-[40px_40px_1fr_40px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_80px]
-        gap-3 md:gap-4 items-center
-        px-4 md:px-6 py-3 border-b border-foreground/10 cursor-pointer
+        group relative grid grid-cols-[32px_36px_1fr_60px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_100px]
+        gap-2 md:gap-4 items-center
+        px-2 md:px-6 py-2 md:py-3 border-b border-foreground/10 cursor-pointer
         transition-all duration-200
-        ${isCurrentTrack ? "border-l-[3px] border-l-white pl-[13px] md:pl-[21px]" : "border-l-[3px] border-l-transparent"}
+        ${isCurrentTrack ? "border-l-[3px] border-l-foreground pl-[9px] md:pl-[21px]" : "border-l-[3px] border-l-transparent"}
         ${isLoading ? "opacity-50 pointer-events-none" : ""}
         hover:bg-foreground/[0.02]
       `}
@@ -190,17 +190,17 @@ function TrackRow({
       </div>
 
       {/* Like & Download Buttons */}
-      <div className="flex items-center justify-end gap-1">
+      <div className="flex items-center justify-end gap-0 md:gap-1">
         <button
           onClick={(e) => {
             e.stopPropagation();
             openAddToPlaylist(track);
           }}
-          className="p-2 transition-transform active:scale-95 group/playlist"
+          className="p-1 md:p-2 transition-transform active:scale-95 group/playlist"
           aria-label="Add to Playlist"
         >
           <ListMusic
-            className="w-4 h-4 text-foreground/20 group-hover/playlist:text-foreground/40 group-hover/playlist:scale-110 transition-all"
+            className="w-3 h-3 md:w-4 md:h-4 text-foreground/20 group-hover/playlist:text-foreground/40 group-hover/playlist:scale-110 transition-all"
           />
         </button>
         <button
@@ -208,11 +208,11 @@ function TrackRow({
             e.stopPropagation();
             toggleLikeTrack(track);
           }}
-          className="p-2 transition-transform active:scale-95 group/heart"
+          className="p-1 md:p-2 transition-transform active:scale-95 group/heart"
           aria-label={liked ? "Remove from Favorites" : "Add to Favorites"}
         >
           <Heart
-            className={`w-4 h-4 transition-all ${liked
+            className={`w-3 h-3 md:w-4 md:h-4 transition-all ${liked
               ? "fill-red-500 text-red-500 scale-110"
               : "text-foreground/20 group-hover/heart:text-foreground/40 group-hover/heart:scale-110"
               }`}
@@ -224,14 +224,14 @@ function TrackRow({
             downloadTrack(track);
           }}
           disabled={isThisDownloading}
-          className="p-2 transition-transform active:scale-95 group/dl"
+          className="p-1 md:p-2 transition-transform active:scale-95 group/dl"
           aria-label="Download track"
         >
           {isThisDownloading ? (
-            <Loader2 className="w-4 h-4 text-foreground/40 animate-spin" />
+            <Loader2 className="w-3 h-3 md:w-4 md:h-4 text-foreground/40 animate-spin" />
           ) : (
             <Download
-              className="w-4 h-4 text-foreground/20 group-hover/dl:text-foreground/40 group-hover/dl:scale-110 transition-all"
+              className="w-3 h-3 md:w-4 md:h-4 text-foreground/20 group-hover/dl:text-foreground/40 group-hover/dl:scale-110 transition-all"
             />
           )}
         </button>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { Track } from "@bitperfect/shared/api";
 import { ListMusic, Plus, Check, X } from "lucide-react";
+import { getCoverUrl } from "@/lib/api/utils";
 import { CreatePlaylistModal } from "./CreatePlaylistModal";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 
@@ -82,14 +83,18 @@ export function AddToPlaylistSheet({ track, isOpen, onClose }: AddToPlaylistShee
                                             onClick={() => handleAddToPlaylist(playlist.id)}
                                             className="w-full flex items-center gap-3 px-4 py-3 border-b border-white/10 last:border-0 active:bg-white/5"
                                         >
-                                            <div className="w-10 h-10 bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
                                                 {playlist.coverArt ? (
                                                     <img
-                                                        src={playlist.coverArt}
+                                                        src={getCoverUrl(playlist.coverArt, "80")}
                                                         alt=""
                                                         className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                        }}
                                                     />
-                                                ) : (
+                                                ) : null}
+                                                {!playlist.coverArt && (
                                                     <ListMusic className="w-5 h-5 text-white/20" />
                                                 )}
                                             </div>

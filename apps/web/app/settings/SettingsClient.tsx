@@ -4,6 +4,85 @@ import { usePersistence } from "@/contexts/PersistenceContext";
 import { Header } from "@/components/layout/Header";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Trash2, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSync } from "@/hooks/useSync";
+
+function AccountSection() {
+  const { isAuthenticated, user, logout } = useAuth();
+  const { isSyncing, lastSync, syncError, triggerSync } = useSync();
+
+  if (!isAuthenticated) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-foreground/40 border-b border-foreground/10 pb-2">Account</h2>
+        <div className="p-6 border border-foreground/10 bg-foreground/[0.02]">
+          <p className="text-sm text-foreground/60 mb-4">
+            Login to sync your playlists, favorites, and settings across all your devices.
+          </p>
+          <a
+            href="/login"
+            className="inline-block px-4 py-2 bg-foreground text-background hover:bg-foreground/90 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
+          >
+            Login or Sign Up
+          </a>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-foreground/40 border-b border-foreground/10 pb-2">Account</h2>
+      <div className="p-6 border border-foreground/10 bg-foreground/[0.02]">
+        <div className="flex items-center gap-3 mb-4">
+          {user?.user_metadata?.avatar_url ? (
+            <img
+              src={user.user_metadata.avatar_url}
+              alt=""
+              className="h-12 w-12 rounded-full"
+            />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background text-lg font-mono uppercase">
+              {user?.email?.[0].toUpperCase() || 'U'}
+            </div>
+          )}
+          <div>
+            <p className="font-mono uppercase tracking-wider text-sm">{user?.user_metadata?.full_name || user?.email?.split('@')[0]}</p>
+            <p className="text-xs text-foreground/50 font-mono">{user?.email}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 mb-4">
+          <button
+            onClick={triggerSync}
+            disabled={isSyncing}
+            className="px-4 py-2 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
+          >
+            {isSyncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+          <button
+            onClick={logout}
+            className="px-4 py-2 border border-foreground/20 hover:bg-foreground/5 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
+          >
+            Logout
+          </button>
+        </div>
+
+        {lastSync && (
+          <p className="text-xs text-foreground/50">
+            Last synced: {lastSync.toLocaleString()}
+          </p>
+        )}
+
+        {syncError && (
+          <p className="text-xs text-red-500">
+            Sync error: {syncError}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
 
 export function SettingsClient() {
     const { settings, updateSettings, clearAll } = usePersistence();
@@ -23,6 +102,8 @@ export function SettingsClient() {
                 <h1 className="text-3xl font-medium tracking-tight mb-8">Settings</h1>
 
                 <div className="space-y-12">
+                    <AccountSection />
+
                     {/* Playback Settings */}
                     <section className="space-y-6">
                         <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-foreground/40 border-b border-foreground/10 pb-2">Playback</h2>
