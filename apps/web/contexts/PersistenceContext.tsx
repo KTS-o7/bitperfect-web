@@ -114,7 +114,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
 
     const createPlaylist = useCallback((name: string, description?: string) => {
         const newPlaylist: Playlist = {
-            id: `playlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: crypto.randomUUID(),
             name,
             description,
             trackIds: [],
