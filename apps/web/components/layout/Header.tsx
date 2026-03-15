@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { usePathname } from "next/navigation";
 
 interface HeaderProps {
@@ -80,7 +81,8 @@ export function Header({ children, showBack = false }: HeaderProps) {
                     </div>
 
                     {/* Right Side Actions */}
-                    <div className="flex-shrink-0">
+                    <div className="flex items-center gap-4">
+                        <UserMenu />
                         <ThemeToggle />
                     </div>
                 </div>

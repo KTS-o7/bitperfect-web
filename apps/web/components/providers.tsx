@@ -3,6 +3,7 @@ import { PersistenceProvider } from "@/contexts/PersistenceContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ReactNode } from "react";
@@ -17,7 +18,9 @@ export function Providers({ children }: { children: ReactNode }) {
             <SearchProvider>
               <ThemeProvider>
                 <ErrorBoundary>
-                  <AudioPlayerProvider>{children}</AudioPlayerProvider>
+                  <AuthProvider>
+                    <AudioPlayerProvider>{children}</AudioPlayerProvider>
+                  </AuthProvider>
                 </ErrorBoundary>
               </ThemeProvider>
             </SearchProvider>

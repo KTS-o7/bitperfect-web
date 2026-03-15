@@ -1,0 +1,95 @@
+// apps/web/contexts/AuthContext.tsx
+'use client';
+
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { User, AuthError } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
+
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signup: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  logout: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signup = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const loginWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
+
+  const value: AuthContextType = {
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    login,
+    signup,
+    logout,
+    loginWithGoogle,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
