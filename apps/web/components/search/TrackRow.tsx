@@ -5,9 +5,10 @@ import { Track } from "@/lib/api/types";
 import { getTrackTitle, formatTime } from "@/lib/api/utils";
 import { api } from "@/lib/api";
 import Image from "next/image";
-import { Disc, Heart, Download, Loader2 } from "lucide-react";
+import { Disc, Heart, Download, Loader2, ListMusic } from "lucide-react";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { useDownload } from "@/hooks/useDownload";
+import { useAddToPlaylist } from "@/contexts/AddToPlaylistContext";
 
 interface TrackRowProps {
   track: Track;
@@ -59,6 +60,7 @@ function TrackRow({
   const liked = isLiked(track.id);
   const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
   const isThisDownloading = isDownloading && downloadingTrackId === track.id;
+  const { open: openAddToPlaylist } = useAddToPlaylist();
 
   return (
     <div
@@ -189,6 +191,18 @@ function TrackRow({
 
       {/* Like & Download Buttons */}
       <div className="flex items-center justify-end gap-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            openAddToPlaylist(track);
+          }}
+          className="p-2 transition-transform active:scale-95 group/playlist"
+          aria-label="Add to Playlist"
+        >
+          <ListMusic
+            className="w-4 h-4 text-foreground/20 group-hover/playlist:text-foreground/40 group-hover/playlist:scale-110 transition-all"
+          />
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();

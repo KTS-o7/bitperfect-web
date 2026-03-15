@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { PlaylistClient } from "./PlaylistClient";
+import { PlaylistClient as LocalPlaylistClient } from "./PlaylistClientLocal";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
@@ -11,6 +12,12 @@ export default async function PlaylistPage({ params }: PlaylistPageProps) {
     const { id } = await params;
     const playlistId = decodeURIComponent(id);
 
+    // Check if this is a local playlist (user-created)
+    if (playlistId.startsWith("playlist-")) {
+        return <LocalPlaylistClient playlistId={playlistId} />;
+    }
+
+    // Otherwise, fetch from API (TIDAL)
     try {
         const playlistData = await api.getPlaylist(playlistId);
 
@@ -30,6 +37,13 @@ export async function generateMetadata({
 }: PlaylistPageProps): Promise<Metadata> {
     const { id } = await params;
     const playlistId = decodeURIComponent(id);
+
+    // Local playlist metadata
+    if (playlistId.startsWith("playlist-")) {
+        return {
+            title: "My Playlist",
+        };
+    }
 
     try {
         const playlistData = await api.getPlaylist(playlistId);

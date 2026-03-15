@@ -615,6 +615,38 @@ export class LosslessAPI {
     return `https://resources.tidal.com/images/${formattedId}/${size}x${size}.jpg`;
   }
 
+  async getTrack(trackId: number): Promise<Track | null> {
+    const cacheKey = `track_${trackId}`;
+    const cached = await this.cache.get("track", cacheKey);
+    if (cached) return cached as Track;
+
+    try {
+      const response = await this.fetchWithRetry(`/track/?id=${trackId}`);
+      const data = await response.json();
+
+      let track: Track | undefined;
+
+      if (data?.data?.items?.[0]?.item) {
+        track = data.data.items[0].item as Track;
+      } else if (data?.item) {
+        track = data.item as Track;
+      } else if (data?.track) {
+        track = data.track as Track;
+      }
+
+      if (track) {
+        const prepared = this.prepareTrack(track);
+        await this.cache.set("track", cacheKey, prepared);
+        return prepared;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Failed to fetch track:", error);
+      return null;
+    }
+  }
+
   async fetchLyrics(track: Track): Promise<LyricsData | null> {
     if (this.lyricsCache.has(track.id)) {
       return this.lyricsCache.get(track.id)!;

@@ -21,7 +21,7 @@ function AccountSection() {
           </p>
           <a
             href="/login"
-            className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 transition-colors"
+            className="inline-block px-4 py-2 bg-foreground text-background hover:bg-foreground/90 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
           >
             Login or Sign Up
           </a>
@@ -42,13 +42,13 @@ function AccountSection() {
               className="h-12 w-12 rounded-full"
             />
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg text-white font-medium">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background text-lg font-mono uppercase">
               {user?.email?.[0].toUpperCase() || 'U'}
             </div>
           )}
           <div>
-            <p className="font-medium">{user?.user_metadata?.full_name || user?.email}</p>
-            <p className="text-xs text-foreground/50">{user?.email}</p>
+            <p className="font-mono uppercase tracking-wider text-sm">{user?.user_metadata?.full_name || user?.email?.split('@')[0]}</p>
+            <p className="text-xs text-foreground/50 font-mono">{user?.email}</p>
           </div>
         </div>
 
@@ -56,13 +56,13 @@ function AccountSection() {
           <button
             onClick={triggerSync}
             disabled={isSyncing}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
           >
             {isSyncing ? 'Syncing...' : 'Sync Now'}
           </button>
           <button
             onClick={logout}
-            className="rounded-md border border-foreground/20 px-4 py-2 text-sm hover:bg-foreground/5 transition-colors"
+            className="px-4 py-2 border border-foreground/20 hover:bg-foreground/5 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
           >
             Logout
           </button>

@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +20,7 @@ export function LoginForm() {
 
     try {
       const { error: authError } = isSignUp
-        ? await signup(email, password)
+        ? await signup(email, password, name || undefined)
         : await login(email, password);
 
       if (authError) {
@@ -31,9 +32,25 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {isSignUp && (
+        <div className="space-y-2">
+          <label htmlFor="name" className="block text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/60">
+            Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-3 bg-transparent border border-foreground/20 text-foreground placeholder-foreground/30 focus:border-foreground/50 focus:outline-none transition-colors text-sm"
+            placeholder="Your name"
+          />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <label htmlFor="email" className="block text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/60">
           Email
         </label>
         <input
@@ -42,13 +59,13 @@ export function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-4 py-3 bg-transparent border border-foreground/20 text-foreground placeholder-foreground/30 focus:border-foreground/50 focus:outline-none transition-colors text-sm"
           placeholder="you@example.com"
         />
       </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-300">
+      <div className="space-y-2">
+        <label htmlFor="password" className="block text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/60">
           Password
         </label>
         <input
@@ -57,19 +74,19 @@ export function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-4 py-3 bg-transparent border border-foreground/20 text-foreground placeholder-foreground/30 focus:border-foreground/50 focus:outline-none transition-colors text-sm"
           placeholder="••••••••"
         />
       </div>
 
       {error && (
-        <div className="text-red-400 text-sm">{error}</div>
+        <div className="text-red-500/80 text-[10px] font-mono uppercase tracking-wider">{error}</div>
       )}
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="w-full px-4 py-3 bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 transition-colors text-[10px] font-mono uppercase tracking-[0.2em]"
       >
         {isLoading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Login'}
       </button>
@@ -77,9 +94,9 @@ export function LoginForm() {
       <button
         type="button"
         onClick={() => setIsSignUp(!isSignUp)}
-        className="w-full text-sm text-blue-400 hover:underline"
+        className="w-full text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/40 hover:text-foreground/70 transition-colors"
       >
-        {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign up"}
+        {isSignUp ? '← Already have an account' : "Don't have an account? Sign up →"}
       </button>
     </form>
   );

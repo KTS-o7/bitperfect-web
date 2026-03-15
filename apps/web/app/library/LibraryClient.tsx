@@ -7,12 +7,14 @@ import {
     useQueue,
 } from "@/contexts/AudioPlayerContext";
 import { Track } from "@bitperfect/shared/api";
-import { Play, Pause, Heart, History, Music2 } from "lucide-react";
+import { Play, Pause, Heart, History, Music2, ListMusic } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
 import { Header } from "@/components/layout/Header";
 import { useState } from "react";
+import { PlaylistList } from "@/components/playlists/PlaylistList";
+import { CreatePlaylistModal } from "@/components/playlists/CreatePlaylistModal";
 
-type LibraryTab = "liked" | "history";
+type LibraryTab = "liked" | "history" | "playlists";
 
 export function LibraryClient() {
     const { likedTracks, history, toggleLikeTrack, isLiked } = usePersistence();
@@ -21,6 +23,7 @@ export function LibraryClient() {
     const { setQueue, togglePlayPause } = useAudioPlayer();
 
     const [activeTab, setActiveTab] = useState<LibraryTab>("liked");
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const handlePlayTrack = (track: Track, tracks: Track[], index: number) => {
         if (currentTrack?.id === track.id) {
@@ -59,10 +62,21 @@ export function LibraryClient() {
                         History ({history.length})
                         {activeTab === "history" && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground" />}
                     </button>
+                    <button
+                        onClick={() => setActiveTab("playlists")}
+                        className={`flex items-center gap-2 pb-4 text-xs font-mono uppercase tracking-widest transition-all relative ${activeTab === "playlists" ? "text-foreground" : "text-foreground/40 hover:text-foreground/70"
+                            }`}
+                    >
+                        <ListMusic className="w-3.5 h-3.5" />
+                        Playlists
+                        {activeTab === "playlists" && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-foreground" />}
+                    </button>
                 </div>
 
-                {/* Tracks List */}
-                {displayedTracks.length > 0 ? (
+                {/* Content */}
+                {activeTab === "playlists" ? (
+                    <PlaylistList onCreateClick={() => setShowCreateModal(true)} />
+                ) : displayedTracks.length > 0 ? (
                     <div className="border border-foreground/10">
                         <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_200px_80px] gap-4 px-6 py-3 border-b border-foreground/10 bg-foreground/[0.02]">
                             <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">#</span>
@@ -123,6 +137,11 @@ export function LibraryClient() {
                     </div>
                 )}
             </div>
+
+            <CreatePlaylistModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+            />
         </div>
     );
 }

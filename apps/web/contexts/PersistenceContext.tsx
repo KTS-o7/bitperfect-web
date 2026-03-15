@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { storage, UserData, DEFAULT_USER_DATA } from "@/lib/storage";
+import { storage, UserData, DEFAULT_USER_DATA, Playlist } from "@/lib/storage";
 import { Track, Album } from "@bitperfect/shared/api";
 import { useToast } from "./ToastContext";
 
@@ -13,6 +13,13 @@ interface PersistenceContextType extends UserData {
     clearAll: () => void;
     isLiked: (trackId: number) => boolean;
     isAlbumSaved: (albumId: number) => boolean;
+    createPlaylist: (name: string, description?: string) => Playlist;
+    deletePlaylist: (playlistId: string) => void;
+    addTrackToPlaylist: (playlistId: string, track: Track) => void;
+    removeTrackFromPlaylist: (playlistId: string, trackId: number) => void;
+    reorderPlaylistTracks: (playlistId: string, trackIds: number[]) => void;
+    updatePlaylist: (playlistId: string, updates: Partial<Playlist>) => void;
+    getPlaylist: (playlistId: string) => Playlist | undefined;
 }
 
 const PersistenceContext = createContext<PersistenceContextType | undefined>(undefined);
@@ -98,6 +105,101 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         return data.savedAlbums.some((a) => a.id === albumId);
     }, [data.savedAlbums]);
 
+    const createPlaylist = useCallback((name: string, description?: string) => {
+        const newPlaylist: Playlist = {
+            id: `playlist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name,
+            description,
+            trackIds: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+
+        setData((prev) => ({
+            ...prev,
+            playlists: [newPlaylist, ...prev.playlists],
+        }));
+
+        success(`Created playlist "${name}"`);
+        return newPlaylist;
+    }, [success]);
+
+    const deletePlaylist = useCallback((playlistId: string) => {
+        setData((prev) => ({
+            ...prev,
+            playlists: prev.playlists.filter((p) => p.id !== playlistId),
+        }));
+        success("Playlist deleted");
+    }, [success]);
+
+    const addTrackToPlaylist = useCallback((playlistId: string, track: Track) => {
+        setData((prev) => {
+            const playlist = prev.playlists.find((p) => p.id === playlistId);
+            if (!playlist) return prev;
+
+            if (playlist.trackIds.includes(track.id)) {
+                toast("Track already in playlist", "info");
+                return prev;
+            }
+
+            const updatedPlaylists = prev.playlists.map((p) =>
+                p.id === playlistId
+                    ? {
+                        ...p,
+                        trackIds: [...p.trackIds, track.id],
+                        updatedAt: new Date().toISOString(),
+                        coverArt: p.coverArt || track.album?.cover,
+                    }
+                    : p
+            );
+
+            return { ...prev, playlists: updatedPlaylists };
+        });
+
+        success("Added to playlist");
+    }, [success, toast]);
+
+    const removeTrackFromPlaylist = useCallback((playlistId: string, trackId: number) => {
+        setData((prev) => ({
+            ...prev,
+            playlists: prev.playlists.map((p) =>
+                p.id === playlistId
+                    ? {
+                        ...p,
+                        trackIds: p.trackIds.filter((id) => id !== trackId),
+                        updatedAt: new Date().toISOString(),
+                    }
+                    : p
+            ),
+        }));
+    }, []);
+
+    const reorderPlaylistTracks = useCallback((playlistId: string, trackIds: number[]) => {
+        setData((prev) => ({
+            ...prev,
+            playlists: prev.playlists.map((p) =>
+                p.id === playlistId
+                    ? { ...p, trackIds, updatedAt: new Date().toISOString() }
+                    : p
+            ),
+        }));
+    }, []);
+
+    const updatePlaylist = useCallback((playlistId: string, updates: Partial<Playlist>) => {
+        setData((prev) => ({
+            ...prev,
+            playlists: prev.playlists.map((p) =>
+                p.id === playlistId
+                    ? { ...p, ...updates, updatedAt: new Date().toISOString() }
+                    : p
+            ),
+        }));
+    }, []);
+
+    const getPlaylist = useCallback((playlistId: string) => {
+        return data.playlists.find((p) => p.id === playlistId);
+    }, [data.playlists]);
+
     return (
         <PersistenceContext.Provider
             value={{
@@ -109,6 +211,13 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
                 clearAll,
                 isLiked,
                 isAlbumSaved,
+                createPlaylist,
+                deletePlaylist,
+                addTrackToPlaylist,
+                removeTrackFromPlaylist,
+                reorderPlaylistTracks,
+                updatePlaylist,
+                getPlaylist,
             }}
         >
             {children}

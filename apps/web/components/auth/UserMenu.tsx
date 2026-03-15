@@ -14,7 +14,7 @@ export function UserMenu() {
     return (
       <a
         href="/login"
-        className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 transition-colors"
+        className="text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/60 hover:text-foreground transition-colors"
       >
         Login
       </a>
@@ -25,20 +25,20 @@ export function UserMenu() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-md p-2 hover:bg-gray-800 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 hover:bg-foreground/5 transition-colors"
       >
         {user?.user_metadata?.avatar_url ? (
           <img
             src={user.user_metadata.avatar_url}
             alt=""
-            className="h-8 w-8 rounded-full"
+            className="h-6 w-6 rounded-full"
           />
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white font-medium">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background text-[10px] font-mono uppercase">
             {user?.email?.[0].toUpperCase() || 'U'}
           </div>
         )}
-        <span className="hidden text-sm font-medium text-gray-200 md:block">
+        <span className="hidden text-[10px] font-mono uppercase tracking-[0.2em] text-foreground/60 md:block">
           {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
         </span>
       </button>
@@ -49,14 +49,14 @@ export function UserMenu() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-2 w-64 rounded-md border border-gray-700 bg-gray-900 py-2 shadow-lg">
-            <div className="border-b border-gray-700 px-4 py-2">
-              <p className="text-sm font-medium text-white">{user?.email}</p>
-              <p className="text-xs text-gray-400">
+          <div className="absolute right-0 z-20 mt-2 w-64 border border-foreground/10 bg-background py-2">
+            <div className="border-b border-foreground/10 px-4 py-3">
+              <p className="text-sm font-mono uppercase tracking-wider text-foreground">{user?.email?.split('@')[0]}</p>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-foreground/40 mt-1">
                 {isSyncing
                   ? 'Syncing...'
                   : lastSync
-                  ? `Last sync: ${lastSync.toLocaleTimeString()}`
+                  ? `Synced ${lastSync.toLocaleTimeString()}`
                   : 'Not synced'}
               </p>
             </div>
@@ -67,14 +67,14 @@ export function UserMenu() {
                 setIsOpen(false);
               }}
               disabled={isSyncing}
-              className="block w-full px-4 py-2 text-left text-sm text-gray-200 hover:bg-gray-800 disabled:opacity-50"
+              className="block w-full px-4 py-2 text-left text-[10px] font-mono uppercase tracking-wider text-foreground/60 hover:text-foreground hover:bg-foreground/5 disabled:opacity-50 transition-colors"
             >
               {isSyncing ? 'Syncing...' : 'Sync Now'}
             </button>
 
             <a
               href="/settings"
-              className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-800"
+              className="block px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors"
               onClick={() => setIsOpen(false)}
             >
               Settings
@@ -85,7 +85,7 @@ export function UserMenu() {
                 logout();
                 setIsOpen(false);
               }}
-              className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-800"
+              className="block w-full px-4 py-2 text-left text-[10px] font-mono uppercase tracking-wider text-red-500/60 hover:text-red-500 hover:bg-foreground/5 transition-colors"
             >
               Logout
             </button>
