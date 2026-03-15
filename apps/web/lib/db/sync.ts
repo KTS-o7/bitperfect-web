@@ -152,11 +152,9 @@ export async function syncToCloud(): Promise<SyncResult> {
     }));
 
     if (favoriteRows.length > 0) {
-      await supabase.from('favorites').delete().eq('user_id', user.id).eq('type', 'track');
-      
       const { error: favError } = await supabase
         .from('favorites')
-        .insert(favoriteRows);
+        .upsert(favoriteRows, { onConflict: 'user_id,type,item_id' });
       
       if (favError) {
         console.error('Favorite sync error:', favError);
