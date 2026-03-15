@@ -23,22 +23,22 @@ export function Providers({ children }: { children: ReactNode }) {
     <MotionConfig reducedMotion="user">
       <QueryProvider>
         <ToastProvider>
-          <PersistenceProvider>
-            <AddToPlaylistProvider>
-              <SearchProvider>
-                <ThemeProvider>
-                  <ErrorBoundary>
-                    <AuthProvider>
+          <AuthProvider>
+            <PersistenceProvider>
+              <AddToPlaylistProvider>
+                <SearchProvider>
+                  <ThemeProvider>
+                    <ErrorBoundary>
                       <AudioPlayerProvider>
                         {children}
                         <AddToPlaylistWrapper />
                       </AudioPlayerProvider>
-                    </AuthProvider>
-                  </ErrorBoundary>
-                </ThemeProvider>
-              </SearchProvider>
-            </AddToPlaylistProvider>
-          </PersistenceProvider>
+                    </ErrorBoundary>
+                  </ThemeProvider>
+                </SearchProvider>
+              </AddToPlaylistProvider>
+            </PersistenceProvider>
+          </AuthProvider>
         </ToastProvider>
       </QueryProvider>
     </MotionConfig>

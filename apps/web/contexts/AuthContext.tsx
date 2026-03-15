@@ -4,6 +4,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { syncToCloud } from '@/lib/db/sync';
 
 interface AuthContextType {
   user: User | null;
@@ -62,6 +63,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    // Sync to cloud before logging out
+    if (user) {
+      try {
+        await syncToCloud();
+        console.log('[Auth] Synced data before logout');
+      } catch (error) {
+        console.error('[Auth] Failed to sync before logout:', error);
+      }
+    }
     await supabase.auth.signOut();
   };
 

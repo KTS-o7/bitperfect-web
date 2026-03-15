@@ -1,13 +1,55 @@
 import { Track, Album } from "@bitperfect/shared/api";
 
+// Minimal track info for playlist storage
+export interface PlaylistTrack {
+    id: number;
+    title: string;
+    duration: number;
+    artist?: {
+        id?: number;
+        name: string;
+    };
+    artists?: Array<{
+        id?: number;
+        name: string;
+        type?: string;
+    }>;
+    album?: {
+        id?: number;
+        title: string;
+        cover?: string;
+    };
+}
+
 export interface Playlist {
     id: string;
     name: string;
     description?: string;
-    trackIds: number[];
+    trackIds: number[];  // Kept for backward compatibility
+    tracks: PlaylistTrack[];  // Full track data
     createdAt: string;
     updatedAt: string;
     coverArt?: string;
+    color?: string;
+}
+
+const PLAYLIST_COLORS = [
+    'from-pink-600 to-rose-500',
+    'from-violet-600 to-purple-500',
+    'from-blue-600 to-cyan-500',
+    'from-green-600 to-emerald-500',
+    'from-yellow-500 to-orange-500',
+    'from-red-600 to-pink-500',
+    'from-indigo-600 to-blue-500',
+    'from-teal-600 to-cyan-500',
+];
+
+export function getPlaylistColor(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return PLAYLIST_COLORS[Math.abs(hash) % PLAYLIST_COLORS.length];
 }
 
 export interface UserSettings {

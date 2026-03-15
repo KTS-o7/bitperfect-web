@@ -15,32 +15,43 @@ export function usePlaylistTracks(): UsePlaylistTracksResult {
     const [isLoading, setIsLoading] = useState(false);
 
     const loadTrack = useCallback(async (trackId: number): Promise<Track | null> => {
+        console.log("[usePlaylistTracks] Loading track:", trackId, "type:", typeof trackId);
         const cached = playlistTrackCache.get(trackId);
-        if (cached) return cached;
+        if (cached) {
+            console.log("[usePlaylistTracks] Track cached:", trackId);
+            return cached;
+        }
 
         try {
             const track = await api.getTrack(trackId);
+            console.log("[usePlaylistTracks] Track loaded:", trackId, track ? "success" : "null");
             if (track) {
                 playlistTrackCache.set(trackId, track);
             }
             return track;
         } catch (error) {
-            console.error("Failed to load track:", error);
+            console.error("[usePlaylistTracks] Failed to load track:", trackId, error);
             return null;
         }
     }, []);
 
     const loadTracks = useCallback(async (trackIds: number[]) => {
+        // Ensure trackIds are numbers
+        const numericTrackIds = trackIds.map(id => typeof id === 'string' ? parseInt(id, 10) : id);
+        console.log("[usePlaylistTracks] Loading tracks:", numericTrackIds, "original:", trackIds);
         setIsLoading(true);
+        setTracks([]); // Clear previous tracks
 
         const loadedTracks: Track[] = [];
         const batchSize = 10;
 
-        for (let i = 0; i < trackIds.length; i += batchSize) {
-            const batch = trackIds.slice(i, i + batchSize);
+        for (let i = 0; i < numericTrackIds.length; i += batchSize) {
+            const batch = numericTrackIds.slice(i, i + batchSize);
             const batchResults = await Promise.all(
                 batch.map((id) => loadTrack(id))
             );
+            
+            console.log("[usePlaylistTracks] Batch results:", batchResults);
 
             loadedTracks.push(...batchResults.filter((t): t is Track => t !== null));
 

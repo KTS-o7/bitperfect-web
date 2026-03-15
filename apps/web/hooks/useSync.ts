@@ -1,7 +1,7 @@
 // apps/web/hooks/useSync.ts
 import { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { performFullSync, SyncResult } from '@/lib/db/sync';
+import { performSync } from '@/lib/db/sync';
 
 interface UseSyncReturn {
   isSyncing: boolean;
@@ -23,10 +23,10 @@ export function useSync(): UseSyncReturn {
     setSyncError(null);
 
     try {
-      const result = await performFullSync();
+      const result = await performSync();
       
-      if (result.error) {
-        setSyncError(result.error);
+      if (!result.success) {
+        setSyncError(result.message);
       } else {
         setLastSync(new Date());
       }

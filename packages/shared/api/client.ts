@@ -621,17 +621,33 @@ export class LosslessAPI {
     if (cached) return cached as Track;
 
     try {
+      console.log(`[API] Fetching track ${trackId}`);
       const response = await this.fetchWithRetry(`/track/?id=${trackId}`);
       const data = await response.json();
+      console.log(`[API] Track ${trackId} response:`, data);
+      console.log(`[API] Track ${trackId} data.data:`, data?.data);
 
       let track: Track | undefined;
 
+      // Check various response formats
       if (data?.data?.items?.[0]?.item) {
         track = data.data.items[0].item as Track;
+        console.log(`[API] Track ${trackId} found in data.data.items[0].item`);
+      } else       if (data?.data?.trackId) {
+        // Track data is directly in data.data
+        track = data.data as Track;
+        console.log(`[API] Track ${trackId} found in data.data (direct)`);
+        console.log(`[API] Track fields:`, Object.keys(data.data));
+        console.log(`[API] Track title:`, data.data.title, `artist:`, data.data.artist);
+      } else if (data?.data?.item) {
+        track = data.data.item as Track;
+        console.log(`[API] Track ${trackId} found in data.data.item`);
       } else if (data?.item) {
         track = data.item as Track;
+        console.log(`[API] Track ${trackId} found in data.item`);
       } else if (data?.track) {
         track = data.track as Track;
+        console.log(`[API] Track ${trackId} found in data.track`);
       }
 
       if (track) {
@@ -640,9 +656,10 @@ export class LosslessAPI {
         return prepared;
       }
 
+      console.log(`[API] Track ${trackId} not found in response`);
       return null;
     } catch (error) {
-      console.error("Failed to fetch track:", error);
+      console.error(`[API] Failed to fetch track ${trackId}:`, error);
       return null;
     }
   }
@@ -652,20 +669,23 @@ export class LosslessAPI {
       return this.lyricsCache.get(track.id)!;
     }
 
+    // Use local proxy API route to avoid CORS
+    const title = encodeURIComponent(track.title);
+    const artist = encodeURIComponent(
+      track.artist?.name || track.artists?.[0]?.name || ""
+    );
+    const album = encodeURIComponent(track.album?.title || "");
+    const duration = Math.floor(track.duration);
+    const source = "apple,lyricsplus,musixmatch,spotify";
+
+    // Use relative URL for same-origin proxy
+    const lyricsUrl = `/api/lyrics?title=${title}&artist=${artist}&album=${album}&duration=${duration}&source=${source}`;
+
     try {
-      const title = encodeURIComponent(track.title);
-      const artist = encodeURIComponent(
-        track.artist?.name || track.artists?.[0]?.name || ""
-      );
-      const album = encodeURIComponent(track.album?.title || "");
-      const duration = Math.floor(track.duration);
-      const source = "apple,lyricsplus,musixmatch,spotify";
-
-      const lyricsUrl = `https://lyricsplus.prjktla.workers.dev/v2/lyrics/get?title=${title}&artist=${artist}&album=${album}&duration=${duration}&source=${source}`;
-
       const response = await fetch(lyricsUrl);
 
       if (!response.ok) {
+        console.warn(`Lyrics API returned ${response.status}`);
         return null;
       }
 

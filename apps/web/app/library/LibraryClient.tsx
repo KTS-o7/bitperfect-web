@@ -1,3 +1,4 @@
+// apps/web/app/library/LibraryClient.tsx
 "use client";
 
 import { usePersistence } from "@/contexts/PersistenceContext";
@@ -78,13 +79,15 @@ export function LibraryClient() {
                     <PlaylistList onCreateClick={() => setShowCreateModal(true)} />
                 ) : displayedTracks.length > 0 ? (
                     <div className="border border-foreground/10">
-                        <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_200px_80px] gap-4 px-6 py-3 border-b border-foreground/10 bg-foreground/[0.02]">
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">#</span>
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">Title</span>
-                            <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest text-foreground/40">Artists</span>
-                            <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest text-foreground/40 text-right">Time</span>
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40 text-right"></span>
+                        {/* Header */}
+                        <div className="flex gap-4 px-6 py-3 border-b border-foreground/10 bg-foreground/[0.02] text-[10px] font-mono uppercase tracking-widest text-foreground/40">
+                            <span className="w-8 text-center">#</span>
+                            <span className="flex-1">Title</span>
+                            <span className="hidden lg:block w-48">Artists</span>
+                            <span className="hidden lg:block w-20 text-right">Time</span>
+                            <span className="w-16 text-right"></span>
                         </div>
+                        {/* Rows */}
                         <div>
                             {displayedTracks.map((track, index) => {
                                 const isCurrent = currentTrack?.id === track.id;
@@ -92,23 +95,23 @@ export function LibraryClient() {
                                     <div
                                         key={`${track.id}-${index}`}
                                         onClick={() => handlePlayTrack(track, displayedTracks, index)}
-                                        className={`grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_200px_80px] gap-4 items-center px-6 py-3 border-b border-foreground/10 last:border-0 cursor-pointer transition-all hover:bg-foreground/[0.02] ${isCurrent ? "border-l-4 border-l-foreground pl-[21px]" : "border-l-4 border-l-transparent"
+                                        className={`flex gap-4 items-center px-6 py-3 border-b border-foreground/10 last:border-0 cursor-pointer transition-all hover:bg-foreground/[0.02] ${isCurrent ? "border-l-4 border-l-foreground pl-[21px]" : "border-l-4 border-l-transparent"
                                             }`}
                                     >
-                                        <div className="text-center font-mono text-xs text-foreground/40">
+                                        <div className="w-8 text-center font-mono text-xs text-foreground/40">
                                             {String(index + 1).padStart(2, "0")}
                                         </div>
-                                        <div className="min-w-0">
+                                        <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium truncate">{getTrackTitle(track)}</div>
-                                            <div className="text-xs text-foreground/50 truncate md:hidden">{getTrackArtists(track)}</div>
+                                            <div className="text-xs text-foreground/50 truncate lg:hidden">{getTrackArtists(track)}</div>
                                         </div>
-                                        <div className="hidden lg:block text-xs text-foreground/40 truncate">
+                                        <div className="hidden lg:block w-48 text-xs text-foreground/40 truncate">
                                             {getTrackArtists(track)}
                                         </div>
-                                        <div className="hidden lg:block text-right font-mono text-xs text-foreground/40 tabular-nums">
+                                        <div className="hidden lg:block w-20 text-right font-mono text-xs text-foreground/40 tabular-nums">
                                             {formatTime(track.duration)}
                                         </div>
-                                        <div className="text-right">
+                                        <div className="w-16 text-right">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();

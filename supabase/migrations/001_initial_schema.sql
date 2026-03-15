@@ -63,6 +63,7 @@ CREATE POLICY "Users can delete own playlists" ON public.playlists FOR DELETE US
 -- RLS Policies for favorites
 CREATE POLICY "Users can view own favorites" ON public.favorites FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own favorites" ON public.favorites FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own favorites" ON public.favorites FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own favorites" ON public.favorites FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for user_settings

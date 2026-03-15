@@ -1,193 +1,235 @@
 // apps/web/lib/db/sync.ts
 import { createClient } from '@/lib/supabase/client';
-import {
-  getAllPlaylists,
-  getAllFavorites,
-  getSettings,
-  savePlaylist,
-  addFavorite,
-  saveSettings,
-  Playlist,
-  Favorite,
-  UserSettings,
-} from './indexeddb';
+import { storage, UserData, Playlist } from '@/lib/storage';
+import { Track } from "@bitperfect/shared/api";
 
-export interface SyncResult {
-  playlistsSynced: number;
-  favoritesSynced: number;
-  settingsSynced: boolean;
-  error?: string;
+interface SyncResult {
+  success: boolean;
+  message: string;
+}
+
+interface DbPlaylist {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  track_ids: string[];
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DbFavorite {
+  id: string;
+  user_id: string;
+  type: 'album' | 'artist' | 'track' | 'playlist';
+  item_id: string;
+  item_data: Record<string, unknown> | null;
+  created_at: string;
+}
+
+interface DbUserSettings {
+  user_id: string;
+  theme: string;
+  audio_quality: string;
+  auto_play: boolean;
+  crossfade_seconds: number;
+  settings_json: Record<string, unknown>;
+  updated_at: string;
 }
 
 export async function syncFromCloud(): Promise<SyncResult> {
   const supabase = createClient();
-  const result: SyncResult = {
-    playlistsSynced: 0,
-    favoritesSynced: 0,
-    settingsSynced: false,
-  };
-
+  
   try {
-    const [{ data: playlists }, { data: favorites }, { data: settings }] = await Promise.all([
-      supabase.from('playlists').select('*'),
-      supabase.from('favorites').select('*'),
-      supabase.from('user_settings').select('*').single(),
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, message: 'Not logged in' };
+    }
+
+    const [playlistsResult, favoritesResult, settingsResult] = await Promise.all([
+      supabase.from('playlists').select('*').eq('user_id', user.id),
+      supabase.from('favorites').select('*').eq('user_id', user.id),
+      supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
     ]);
 
-    if (playlists) {
-      const localPlaylists = await getAllPlaylists();
-      const localMap = new Map(localPlaylists.map(p => [p.id, p]));
+    const localData = storage.load();
 
-      for (const remotePlaylist of playlists) {
-        const localPlaylist = localMap.get(remotePlaylist.id);
-        
-        if (!localPlaylist || new Date(remotePlaylist.updated_at) > new Date(localPlaylist.updatedAt)) {
-          await savePlaylist({
-            id: remotePlaylist.id,
-            name: remotePlaylist.name,
-            description: remotePlaylist.description || undefined,
-            coverUrl: remotePlaylist.cover_url || undefined,
-            trackIds: remotePlaylist.track_ids || [],
-            isPublic: remotePlaylist.is_public || false,
-            createdAt: remotePlaylist.created_at,
-            updatedAt: remotePlaylist.updated_at,
-            syncedAt: new Date().toISOString(),
-          });
-          result.playlistsSynced++;
-        }
-      }
+    const cloudPlaylists: Playlist[] = (playlistsResult.data || []).map((p: DbPlaylist) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description || undefined,
+      trackIds: (p.track_ids || []).map(id => parseInt(String(id), 10)),
+      tracks: [],
+      coverArt: p.cover_url || undefined,
+      createdAt: p.created_at,
+      updatedAt: p.updated_at,
+    }));
+
+    const cloudLikedTracks: Track[] = (favoritesResult.data || [])
+      .filter((f: DbFavorite) => f.type === 'track')
+      .map((f: DbFavorite) => f.item_data as unknown as Track);
+
+    const mergedPlaylists = mergePlaylists(localData.playlists, cloudPlaylists);
+    const mergedLikedTracks = mergeTracks(localData.likedTracks, cloudLikedTracks);
+
+    let mergedSettings = localData.settings;
+    if (settingsResult.data) {
+      const dbSettings = settingsResult.data as DbUserSettings;
+      mergedSettings = {
+        quality: (dbSettings.audio_quality as 'LOW' | 'HIGH' | 'LOSSLESS') || 'LOSSLESS',
+        ...(dbSettings.settings_json as Record<string, unknown>),
+      };
     }
 
-    if (favorites) {
-      const localFavorites = await getAllFavorites();
-      const localSet = new Set(localFavorites.map(f => `${f.type}:${f.itemId}`));
+    const mergedData: UserData = {
+      likedTracks: mergedLikedTracks,
+      history: localData.history,
+      savedAlbums: localData.savedAlbums,
+      playlists: mergedPlaylists,
+      settings: mergedSettings,
+    };
+    
+    storage.save(mergedData);
+    return { success: true, message: 'Synced from cloud' };
 
-      for (const remoteFavorite of favorites) {
-        const key = `${remoteFavorite.type}:${remoteFavorite.item_id}`;
-        
-        if (!localSet.has(key)) {
-          await addFavorite({
-            id: remoteFavorite.id,
-            type: remoteFavorite.type,
-            itemId: remoteFavorite.item_id,
-            itemData: remoteFavorite.item_data || undefined,
-            createdAt: remoteFavorite.created_at,
-          });
-          result.favoritesSynced++;
-        }
-      }
-    }
-
-    if (settings) {
-      const localSettings = await getSettings();
-      
-      if (!localSettings || new Date(settings.updated_at) > new Date(localSettings.updatedAt)) {
-        await saveSettings({
-          theme: settings.theme as 'dark' | 'light',
-          audioQuality: settings.audio_quality as 'low' | 'medium' | 'high',
-          autoPlay: settings.auto_play,
-          crossfadeSeconds: settings.crossfade_seconds,
-          settingsJson: settings.settings_json as Record<string, unknown>,
-          updatedAt: settings.updated_at,
-        });
-        result.settingsSynced = true;
-      }
-    }
-
-    return result;
   } catch (error) {
     console.error('Sync from cloud failed:', error);
-    return {
-      ...result,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
+}
+
+function uuidv4(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
 }
 
 export async function syncToCloud(): Promise<SyncResult> {
   const supabase = createClient();
-  const result: SyncResult = {
-    playlistsSynced: 0,
-    favoritesSynced: 0,
-    settingsSynced: false,
-  };
-
+  
   try {
-    const [playlists, favorites, settings] = await Promise.all([
-      getAllPlaylists(),
-      getAllFavorites(),
-      getSettings(),
-    ]);
-
-    const playlistUpserts = playlists
-      .filter(p => !p.syncedAt || new Date(p.updatedAt) > new Date(p.syncedAt))
-      .map(p => ({
-        id: p.id,
-        name: p.name,
-        description: p.description || null,
-        cover_url: p.coverUrl || null,
-        track_ids: p.trackIds,
-        is_public: p.isPublic,
-        updated_at: p.updatedAt,
-      }));
-
-    if (playlistUpserts.length > 0) {
-      const { error } = await supabase.from('playlists').upsert(playlistUpserts);
-      if (error) throw error;
-      result.playlistsSynced = playlistUpserts.length;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, message: 'Not logged in' };
     }
 
-    const favoriteUpserts = favorites.map(f => ({
-      id: f.id,
-      type: f.type,
-      item_id: f.itemId,
-      item_data: f.itemData || null,
-      created_at: f.createdAt,
+    const localData = storage.load();
+
+    const playlistRows = localData.playlists.map((p: Playlist) => ({
+      id: isValidUUID(p.id) ? p.id : uuidv4(),
+      user_id: user.id,
+      name: p.name,
+      description: p.description || null,
+      cover_url: p.coverArt || null,
+      track_ids: p.trackIds.map(String),
+      is_public: false,
+      updated_at: new Date().toISOString(),
     }));
 
-    if (favoriteUpserts.length > 0) {
-      const { error } = await supabase.from('favorites').upsert(favoriteUpserts);
-      if (error) throw error;
-      result.favoritesSynced = favoriteUpserts.length;
-    }
-
-    if (settings) {
-      const { error } = await supabase.from('user_settings').upsert({
-        theme: settings.theme,
-        audio_quality: settings.audioQuality,
-        auto_play: settings.autoPlay,
-        crossfade_seconds: settings.crossfadeSeconds,
-        settings_json: settings.settingsJson,
-        updated_at: settings.updatedAt,
-      });
-      if (error) throw error;
-      result.settingsSynced = true;
-    }
-
-    for (const playlist of playlists) {
-      if (!playlist.syncedAt || new Date(playlist.updatedAt) > new Date(playlist.syncedAt)) {
-        await savePlaylist({ ...playlist, syncedAt: new Date().toISOString() });
+    if (playlistRows.length > 0) {
+      const { error: playlistError } = await supabase
+        .from('playlists')
+        .upsert(playlistRows, { onConflict: 'id' });
+      
+      if (playlistError) {
+        console.error('Playlist sync error:', playlistError);
+        return { success: false, message: playlistError.message };
       }
     }
 
-    return result;
+    const favoriteRows = localData.likedTracks.map((track: Track) => ({
+      id: crypto.randomUUID(),
+      user_id: user.id,
+      type: 'track' as const,
+      item_id: String(track.id),
+      item_data: track as unknown as Record<string, unknown>,
+      created_at: new Date().toISOString(),
+    }));
+
+    if (favoriteRows.length > 0) {
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('type', 'track');
+      
+      const { error: favError } = await supabase
+        .from('favorites')
+        .insert(favoriteRows);
+      
+      if (favError) {
+        console.error('Favorite sync error:', favError);
+        return { success: false, message: favError.message };
+      }
+    }
+
+    const { error: settingsError } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        theme: 'dark',
+        audio_quality: localData.settings.quality || 'LOSSLESS',
+        auto_play: true,
+        crossfade_seconds: 0,
+        settings_json: localData.settings,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (settingsError) {
+      console.error('Settings sync error:', settingsError);
+    }
+
+    return { success: true, message: 'Synced to cloud' };
   } catch (error) {
     console.error('Sync to cloud failed:', error);
-    return {
-      ...result,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
-export async function performFullSync(): Promise<SyncResult> {
+export async function performSync(): Promise<SyncResult> {
   const fromCloud = await syncFromCloud();
-  const toCloud = await syncToCloud();
+  if (!fromCloud.success) {
+    return fromCloud;
+  }
+  return await syncToCloud();
+}
 
-  return {
-    playlistsSynced: fromCloud.playlistsSynced + toCloud.playlistsSynced,
-    favoritesSynced: fromCloud.favoritesSynced + toCloud.favoritesSynced,
-    settingsSynced: fromCloud.settingsSynced || toCloud.settingsSynced,
-    error: fromCloud.error || toCloud.error,
-  };
+function mergePlaylists(local: Playlist[], cloud: Playlist[]): Playlist[] {
+  const map = new Map<string, Playlist>();
+  
+  local.forEach(p => map.set(p.id, p));
+  
+  cloud.forEach(p => {
+    const existing = map.get(p.id);
+    if (!existing) {
+      map.set(p.id, p);
+    } else {
+      const localDate = new Date(existing.updatedAt);
+      const cloudDate = new Date(p.updatedAt);
+      if (cloudDate > localDate) {
+        map.set(p.id, p);
+      }
+    }
+  });
+  
+  return Array.from(map.values());
+}
+
+function mergeTracks(local: Track[], cloud: Track[]): Track[] {
+  const map = new Map<number, Track>();
+  
+  local.forEach(t => map.set(t.id, t));
+  
+  cloud.forEach(t => {
+    if (!map.has(t.id)) {
+      map.set(t.id, t);
+    }
+  });
+  
+  return Array.from(map.values());
 }
