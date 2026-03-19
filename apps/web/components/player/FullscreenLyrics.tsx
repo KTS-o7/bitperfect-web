@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { useLyrics } from "@/hooks/useLyrics";
 import { Track, LyricsData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { getCoverUrl } from "@/lib/api/utils";
