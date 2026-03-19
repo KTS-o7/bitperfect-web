@@ -1,6 +1,6 @@
 // apps/web/lib/db/sync.ts
 import { createClient } from '@/lib/supabase/client';
-import { storage, UserData, Playlist } from '@/lib/storage';
+import { storage, UserData, Playlist, PlaylistTrack } from '@/lib/storage';
 import { Track, Album } from "@bitperfect/shared/api";
 
 interface SyncResult {
@@ -15,6 +15,7 @@ interface DbPlaylist {
   description: string | null;
   cover_url: string | null;
   track_ids: string[];
+  tracks_data: PlaylistTrack[] | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -61,7 +62,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
       name: p.name,
       description: p.description || undefined,
       trackIds: (p.track_ids || []).map(id => parseInt(String(id), 10)),
-      tracks: [],
+      tracks: (p.tracks_data || []) as PlaylistTrack[],
       coverArt: p.cover_url || undefined,
       createdAt: p.created_at,
       updatedAt: p.updated_at,
@@ -132,6 +133,7 @@ export async function syncToCloud(): Promise<SyncResult> {
       description: p.description || null,
       cover_url: p.coverArt || null,
       track_ids: p.trackIds.map(String),
+      tracks_data: p.tracks as unknown as Record<string, unknown>[],
       is_public: false,
       updated_at: new Date().toISOString(),
     }));
