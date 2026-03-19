@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { api } from "@/lib/api";
 import { PlaylistClient } from "./PlaylistClient";
 import { PlaylistClient as LocalPlaylistClient } from "./PlaylistClientLocal";
@@ -8,18 +9,20 @@ interface PlaylistPageProps {
     params: Promise<{ id: string }>;
 }
 
+const getPlaylistCached = cache((playlistId: string) =>
+    api.getPlaylist(playlistId)
+);
+
 export default async function PlaylistPage({ params }: PlaylistPageProps) {
     const { id } = await params;
     const playlistId = decodeURIComponent(id);
 
-    // Check if this is a local playlist (user-created)
     if (playlistId.startsWith("playlist-")) {
         return <LocalPlaylistClient playlistId={playlistId} />;
     }
 
-    // Otherwise, fetch from API (TIDAL)
     try {
-        const playlistData = await api.getPlaylist(playlistId);
+        const playlistData = await getPlaylistCached(playlistId);
 
         if (!playlistData) {
             notFound();
@@ -38,22 +41,17 @@ export async function generateMetadata({
     const { id } = await params;
     const playlistId = decodeURIComponent(id);
 
-    // Local playlist metadata
     if (playlistId.startsWith("playlist-")) {
-        return {
-            title: "My Playlist",
-        };
+        return { title: "My Playlist" };
     }
 
     try {
-        const playlistData = await api.getPlaylist(playlistId);
+        const playlistData = await getPlaylistCached(playlistId);
         return {
             title: `${playlistData.playlist.title} - Playlist`,
             description: `Listen to ${playlistData.playlist.title}`,
         };
     } catch {
-        return {
-            title: "Playlist Detail",
-        };
+        return { title: "Playlist Detail" };
     }
 }
