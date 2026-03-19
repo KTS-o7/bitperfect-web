@@ -1,7 +1,7 @@
 // apps/web/lib/db/sync.ts
 import { createClient } from '@/lib/supabase/client';
 import { storage, UserData, Playlist } from '@/lib/storage';
-import { Track } from "@bitperfect/shared/api";
+import { Track, Album } from "@bitperfect/shared/api";
 
 interface SyncResult {
   success: boolean;
@@ -71,8 +71,13 @@ export async function syncFromCloud(): Promise<SyncResult> {
       .filter((f: DbFavorite) => f.type === 'track')
       .map((f: DbFavorite) => f.item_data as unknown as Track);
 
+    const cloudSavedAlbums: Album[] = (favoritesResult.data || [])
+      .filter((f: DbFavorite) => f.type === 'album')
+      .map((f: DbFavorite) => f.item_data as unknown as Album);
+
     const mergedPlaylists = mergePlaylists(localData.playlists, cloudPlaylists);
     const mergedLikedTracks = mergeTracks(localData.likedTracks, cloudLikedTracks);
+    const mergedSavedAlbums = mergeAlbums(localData.savedAlbums, cloudSavedAlbums);
 
     let mergedSettings = localData.settings;
     if (settingsResult.data) {
@@ -86,7 +91,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
     const mergedData: UserData = {
       likedTracks: mergedLikedTracks,
       history: localData.history,
-      savedAlbums: localData.savedAlbums,
+      savedAlbums: mergedSavedAlbums,
       playlists: mergedPlaylists,
       settings: mergedSettings,
     };
@@ -161,6 +166,24 @@ export async function syncToCloud(): Promise<SyncResult> {
       }
     }
 
+    const albumRows = localData.savedAlbums.map((album: Album) => ({
+      user_id: user.id,
+      type: 'album' as const,
+      item_id: String(album.id),
+      item_data: album as unknown as Record<string, unknown>,
+      created_at: new Date().toISOString(),
+    }));
+
+    if (albumRows.length > 0) {
+      const { error: albumError } = await supabase
+        .from('favorites')
+        .upsert(albumRows, { onConflict: 'user_id,type,item_id' });
+      
+      if (albumError) {
+        console.error('Album sync error:', albumError);
+      }
+    }
+
     const { error: settingsError } = await supabase
       .from('user_settings')
       .upsert({
@@ -169,7 +192,7 @@ export async function syncToCloud(): Promise<SyncResult> {
         audio_quality: localData.settings.quality || 'LOSSLESS',
         auto_play: true,
         crossfade_seconds: 0,
-        settings_json: localData.settings,
+        settings_json: localData.settings as unknown as Record<string, unknown>,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
 
@@ -221,6 +244,20 @@ function mergeTracks(local: Track[], cloud: Track[]): Track[] {
   cloud.forEach(t => {
     if (!map.has(t.id)) {
       map.set(t.id, t);
+    }
+  });
+  
+  return Array.from(map.values());
+}
+
+function mergeAlbums(local: Album[], cloud: Album[]): Album[] {
+  const map = new Map<number, Album>();
+  
+  local.forEach(a => map.set(a.id, a));
+  
+  cloud.forEach(a => {
+    if (!map.has(a.id)) {
+      map.set(a.id, a);
     }
   });
   
