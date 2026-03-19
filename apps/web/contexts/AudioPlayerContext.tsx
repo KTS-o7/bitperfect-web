@@ -24,6 +24,7 @@ import {
 } from "@/lib/audioPlayerTypes";
 import { getPersistedState, savePersistedState } from "@/lib/audioStorage";
 import { updateMediaSessionMetadata, updateMediaSessionPlaybackState } from "@/lib/mediaSession";
+import { useLyrics } from "@/hooks/useLyrics";
 
 // State context — updates on every timeupdate (~4Hz during playback)
 const AudioPlayerStateContext = createContext<AudioPlayerContextValue | null>(null);
@@ -76,6 +77,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   });
 
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+
+  const {
+    lyrics,
+    currentLineIndex,
+    isLoading: isLoadingLyrics,
+    error: lyricsError,
+    hasLyrics,
+    hasSyncedLyrics,
+  } = useLyrics(state.currentTrack, state.currentTime, state.isPlaying);
 
   const preloadCache = useRef<Map<number, string>>(new Map());
   const originalQueueBeforeShuffle = useRef<Track[]>([]);
@@ -739,9 +749,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       isStatsOpen,
+      lyrics,
+      currentLineIndex,
+      isLoadingLyrics,
+      lyricsError,
+      hasLyrics,
+      hasSyncedLyrics,
       ...actions,
     }),
-    [state, isStatsOpen, actions]
+    [state, isStatsOpen, lyrics, currentLineIndex, isLoadingLyrics, lyricsError, hasLyrics, hasSyncedLyrics, actions]
   );
 
   return (

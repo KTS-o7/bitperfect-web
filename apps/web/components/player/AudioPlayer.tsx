@@ -72,7 +72,6 @@ const StatsForNerds = dynamic(
     ssr: false,
   },
 );
-import { useLyrics } from "@/hooks/useLyrics";
 import Image from "next/image";
 import { QualityBadge } from "./QualityBadge";
 
@@ -93,6 +92,11 @@ export function AudioPlayer() {
     toggleRepeat,
     isStatsOpen,
     setIsStatsOpen,
+    lyrics,
+    currentLineIndex,
+    isLoadingLyrics: lyricsLoading,
+    lyricsError,
+    hasLyrics,
   } = useAudioPlayer();
 
   const { toggleLikeTrack, isLiked } = usePersistence();
@@ -106,14 +110,6 @@ export function AudioPlayer() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-
-  const {
-    lyrics,
-    currentLineIndex,
-    isLoading: lyricsLoading,
-    error: lyricsError,
-    hasLyrics,
-  } = useLyrics(currentTrack, currentTime, isPlaying);
 
   const formattedCurrentTime = useMemo(
     () => formatTime(currentTime),

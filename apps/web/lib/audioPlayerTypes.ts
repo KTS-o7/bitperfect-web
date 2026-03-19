@@ -1,4 +1,4 @@
-import { Track } from "@/lib/api/types";
+import { Track, LyricsData } from "@/lib/api/types";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -37,6 +37,12 @@ export interface AudioPlayerContextValue extends AudioPlayerState {
   getAudioElement: () => HTMLAudioElement | null;
   isStatsOpen: boolean;
   setIsStatsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  lyrics: LyricsData | null;
+  currentLineIndex: number;
+  isLoadingLyrics: boolean;
+  lyricsError: string | null;
+  hasLyrics: boolean;
+  hasSyncedLyrics: boolean;
 }
 
 export interface PersistedState {

@@ -28,7 +28,6 @@ import Image from "next/image";
 import { QualityBadge } from "./QualityBadge";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useLyrics } from "@/hooks/useLyrics";
 import { LyricsPanel } from "./LyricsPanel";
 import type { Track } from "@/lib/api/types";
 import { usePersistence } from "@/contexts/PersistenceContext";
@@ -240,6 +239,10 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
     shuffleActive,
     repeatMode,
     setIsStatsOpen,
+    lyrics,
+    currentLineIndex,
+    isLoadingLyrics: lyricsLoading,
+    hasLyrics,
   } = useAudioPlayer();
   const { currentTrack, queue, currentQueueIndex, currentQuality } = useQueue();
   const { toggleLikeTrack, isLiked } = usePersistence();
@@ -251,14 +254,6 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
   const [expandedTab, setExpandedTab] = useState<Tab>(null); // Mobile only
   const [autoPlay, setAutoPlay] = useState(true);
-
-
-  const {
-    lyrics,
-    currentLineIndex,
-    isLoading: lyricsLoading,
-    hasLyrics,
-  } = useLyrics(currentTrack, currentTime, isPlaying);
 
   // DnD sensors
   const sensors = useSensors(
