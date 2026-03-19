@@ -143,7 +143,6 @@ export async function syncToCloud(): Promise<SyncResult> {
     }
 
     const favoriteRows = localData.likedTracks.map((track: Track) => ({
-      id: crypto.randomUUID(),
       user_id: user.id,
       type: 'track' as const,
       item_id: String(track.id),
