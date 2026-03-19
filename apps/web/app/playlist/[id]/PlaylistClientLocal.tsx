@@ -1,7 +1,7 @@
 // apps/web/app/playlist/[id]/PlaylistClientLocal.tsx
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { Header } from "@/components/layout/Header";
 import { Track } from "@bitperfect/shared/api";
@@ -41,17 +41,12 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const [showQRCode, setShowQRCode] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
 
-    const getPlaylistRef = useRef(getPlaylist);
     useEffect(() => {
-        getPlaylistRef.current = getPlaylist;
-    });
-
-    useEffect(() => {
-        const refreshedPlaylist = getPlaylistRef.current(playlistId);
+        const refreshedPlaylist = getPlaylist(playlistId);
         if (refreshedPlaylist) {
             setPlaylist(refreshedPlaylist);
         }
-    }, [playlistId]);
+    }, [playlistId, getPlaylist]);
 
     // Convert stored tracks to Track format
     const tracks = playlist?.tracks?.map(convertToTrack) || [];

@@ -63,6 +63,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         return () => {
             if (saveTimerRef.current) {
                 clearTimeout(saveTimerRef.current);
+                storage.save(data); // flush on unmount to avoid data loss
             }
         };
     }, [data, isLoaded]);
@@ -242,9 +243,14 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         }));
     }, []);
 
+    const playlistsRef = useRef(data.playlists);
+    useEffect(() => {
+        playlistsRef.current = data.playlists;
+    });
+
     const getPlaylist = useCallback((playlistId: string) => {
-        return data.playlists.find((p) => p.id === playlistId);
-    }, [data.playlists]);
+        return playlistsRef.current.find((p) => p.id === playlistId);
+    }, []); // stable — reads from ref, no deps
 
     return (
         <PersistenceContext.Provider
