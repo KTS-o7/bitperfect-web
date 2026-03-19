@@ -38,12 +38,25 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     const { isAuthenticated } = useAuth();
     const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const latestDataRef = useRef(data);
 
     // Load from storage on mount
     useEffect(() => {
         setData(storage.load());
         setIsLoaded(true);
     }, []);
+
+    // Always-current data ref — updated synchronously on every render
+    useEffect(() => {
+        latestDataRef.current = data;
+    });
+
+    // Flush latest data to storage on unmount only
+    useEffect(() => {
+        return () => {
+            storage.save(latestDataRef.current);
+        };
+    }, []); // empty deps = unmount only
 
     // Note: Sync is now manual only (on login/logout and via button)
     // to avoid hitting rate limits
@@ -63,7 +76,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         return () => {
             if (saveTimerRef.current) {
                 clearTimeout(saveTimerRef.current);
-                storage.save(data); // flush on unmount to avoid data loss
+                // No flush here — the unmount effect handles that
             }
         };
     }, [data, isLoaded]);
