@@ -76,8 +76,6 @@ import { useLyrics } from "@/hooks/useLyrics";
 import Image from "next/image";
 import { QualityBadge } from "./QualityBadge";
 
-const SEGMENT_COUNT = 300;
-
 export function AudioPlayer() {
   const { isPlaying, currentTime, duration, volume, isMuted } =
     usePlaybackState();
@@ -103,11 +101,11 @@ export function AudioPlayer() {
   const isCurrentDownloading = currentTrack ? isDownloading && downloadingTrackId === currentTrack.id : false;
 
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const progressFillRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const [hoverSegment, setHoverSegment] = useState<number | null>(null);
 
   const {
     lyrics,
@@ -116,11 +114,6 @@ export function AudioPlayer() {
     error: lyricsError,
     hasLyrics,
   } = useLyrics(currentTrack, currentTime, isPlaying);
-
-  const currentSegment = useMemo(() => {
-    if (duration === 0) return 0;
-    return Math.floor((currentTime / duration) * SEGMENT_COUNT);
-  }, [currentTime, duration]);
 
   const formattedCurrentTime = useMemo(
     () => formatTime(currentTime),
@@ -135,39 +128,14 @@ export function AudioPlayer() {
     return getCoverUrl(coverId, "160");
   }, [currentTrack]);
 
-  const handleSegmentClick = useCallback(
-    (segmentIndex: number) => {
-      if (duration === 0) return;
-      const newTime = (segmentIndex / SEGMENT_COUNT) * duration;
-      seek(newTime);
-    },
-    [duration, seek],
-  );
-
-  const handleProgressMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!progressBarRef.current) return;
-      const rect = progressBarRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const segmentIndex = Math.floor((x / rect.width) * SEGMENT_COUNT);
-      setHoverSegment(segmentIndex);
-    },
-    [],
-  );
-
-  const handleProgressMouseLeave = useCallback(() => {
-    setHoverSegment(null);
-  }, []);
-
-  const handleSegmentInteraction = useCallback(
+  const handleProgressClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (!progressBarRef.current || duration === 0) return;
       const rect = progressBarRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const segmentIndex = Math.floor((x / rect.width) * SEGMENT_COUNT);
-      handleSegmentClick(segmentIndex);
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      seek(pct * duration);
     },
-    [duration, handleSegmentClick],
+    [duration, seek],
   );
 
   useEffect(() => {
@@ -184,6 +152,13 @@ export function AudioPlayer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+    if (progressFillRef.current) {
+      const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+      progressFillRef.current.style.width = `${pct}%`;
+    }
+  }, [currentTime, duration]);
+
   if (!currentTrack) return null;
 
   const coverUrl = getCoverUrlFn();
@@ -192,24 +167,16 @@ export function AudioPlayer() {
     <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-foreground/20 z-50">
       <div
         ref={progressBarRef}
-        className="h-5 bg-background cursor-pointer flex items-center gap-[2px] px-4"
-        onMouseMove={handleProgressMouseMove}
-        onMouseLeave={handleProgressMouseLeave}
-        onClick={handleSegmentInteraction}
+        className="h-5 bg-background cursor-pointer px-4 flex items-center"
+        onClick={handleProgressClick}
       >
-        {Array.from({ length: SEGMENT_COUNT }).map((_, i) => {
-          const isFilled = i < currentSegment;
-          const isHovered = hoverSegment !== null && i <= hoverSegment;
-
-          return (
-            <div
-              key={i}
-              className={`flex-1 h-3 transition-colors duration-75 ${isFilled ? "bg-foreground" : isHovered ? "bg-foreground/40" : "bg-foreground/15"
-                }`}
-              style={{ minWidth: "2px" }}
-            />
-          );
-        })}
+        <div className="relative h-3 w-full bg-foreground/15">
+          <div
+            ref={progressFillRef}
+            className="absolute inset-y-0 left-0 bg-foreground pointer-events-none"
+            style={{ width: "0%" }}
+          />
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-4">
