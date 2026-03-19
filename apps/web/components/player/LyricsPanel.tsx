@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { Download, X, Music } from "lucide-react";
-import { useLyrics } from "@/hooks/useLyrics";
 import { Track, LyricsData } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import "@/styles/lyrics.css";

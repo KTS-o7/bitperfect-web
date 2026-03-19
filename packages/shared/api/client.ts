@@ -75,7 +75,21 @@ export class LosslessAPI {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const response = await fetch(url, { signal: options.signal });
+          const perAttemptController = new AbortController();
+          const timeoutId = setTimeout(() => perAttemptController.abort(), 5000);
+
+          const anySignal = (AbortSignal as unknown as { any?: (s: AbortSignal[]) => AbortSignal }).any;
+          const effectiveSignal =
+            anySignal && options.signal
+              ? anySignal([options.signal, perAttemptController.signal])
+              : perAttemptController.signal;
+
+          let response: Response;
+          try {
+            response = await fetch(url, { signal: effectiveSignal });
+          } finally {
+            clearTimeout(timeoutId);
+          }
 
           if (response.status === 429) {
             throw new Error(RATE_LIMIT_ERROR_MESSAGE);
@@ -115,7 +129,13 @@ export class LosslessAPI {
           break;
         } catch (error) {
           if (error instanceof Error && error.name === "AbortError") {
-            throw error;
+            // Only propagate if the CALLER cancelled, not a per-attempt timeout
+            if (options.signal?.aborted) {
+              throw error;
+            }
+            // Per-attempt timeout: treat as transient and advance to next instance
+            lastError = new Error(`Request timed out after 5s: ${url}`);
+            break; // no point retrying the same slow instance
           }
 
           lastError =

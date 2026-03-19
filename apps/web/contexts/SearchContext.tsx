@@ -46,10 +46,9 @@ function getInitialState() {
 
 export function SearchProvider({ children }: { children: ReactNode }) {
   // Lazy initialization - only runs once
-  const [query, setQueryState] = useState(() => getInitialState().query);
-  const [currentTab, setCurrentTabState] = useState<SearchContentType>(
-    () => getInitialState().currentTab
-  );
+  const [{ query: initialQuery, currentTab: initialTab }] = useState(getInitialState);
+  const [query, setQueryState] = useState(initialQuery);
+  const [currentTab, setCurrentTabState] = useState<SearchContentType>(initialTab);
 
   // Debounce persistence to avoid frequent localStorage writes
   useEffect(() => {

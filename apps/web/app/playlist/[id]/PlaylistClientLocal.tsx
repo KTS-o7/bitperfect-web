@@ -42,7 +42,6 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const [showScanner, setShowScanner] = useState(false);
 
     useEffect(() => {
-        // Refresh playlist data when it changes in persistence
         const refreshedPlaylist = getPlaylist(playlistId);
         if (refreshedPlaylist) {
             setPlaylist(refreshedPlaylist);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { storage, UserData, DEFAULT_USER_DATA, Playlist } from "@/lib/storage";
 import { Track, Album } from "@bitperfect/shared/api";
 import { useToast } from "./ToastContext";
@@ -22,6 +22,7 @@ interface PersistenceContextType extends UserData {
     reorderPlaylistTracks: (playlistId: string, trackIds: number[]) => void;
     updatePlaylist: (playlistId: string, updates: Partial<Playlist>) => void;
     getPlaylist: (playlistId: string) => Playlist | undefined;
+    reloadFromStorage: () => void;
 }
 
 const PersistenceContext = createContext<PersistenceContextType | undefined>(undefined);
@@ -29,9 +30,15 @@ const PersistenceContext = createContext<PersistenceContextType | undefined>(und
 export function PersistenceProvider({ children }: { children: React.ReactNode }) {
     const [data, setData] = useState<UserData>(DEFAULT_USER_DATA);
     const [isLoaded, setIsLoaded] = useState(false);
+    const likedTrackIdSet = useMemo(
+        () => new Set(data.likedTracks.map((t) => t.id)),
+        [data.likedTracks]
+    );
     const { success, toast } = useToast();
     const { isAuthenticated } = useAuth();
     const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const latestDataRef = useRef(data);
 
     // Load from storage on mount
     useEffect(() => {
@@ -39,14 +46,39 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         setIsLoaded(true);
     }, []);
 
+    // Always-current data ref — updated synchronously on every render
+    useEffect(() => {
+        latestDataRef.current = data;
+    });
+
+    // Flush latest data to storage on unmount only
+    useEffect(() => {
+        return () => {
+            storage.save(latestDataRef.current);
+        };
+    }, []); // empty deps = unmount only
+
     // Note: Sync is now manual only (on login/logout and via button)
     // to avoid hitting rate limits
 
-    // Save to storage whenever data changes
+    // Save to storage whenever data changes (debounced by 500ms)
     useEffect(() => {
-        if (isLoaded) {
-            storage.save(data);
+        if (!isLoaded) return;
+
+        if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
         }
+
+        saveTimerRef.current = setTimeout(() => {
+            storage.save(data);
+        }, 500);
+
+        return () => {
+            if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+                // No flush here — the unmount effect handles that
+            }
+        };
     }, [data, isLoaded]);
 
     const toggleLikeTrack = useCallback((track: Track) => {
@@ -104,9 +136,13 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         success("All local data has been cleared");
     }, [success]);
 
+    const reloadFromStorage = useCallback(() => {
+        setData(storage.load());
+    }, []);
+
     const isLiked = useCallback((trackId: number) => {
-        return data.likedTracks.some((t) => t.id === trackId);
-    }, [data.likedTracks]);
+        return likedTrackIdSet.has(trackId);
+    }, [likedTrackIdSet]);
 
     const isAlbumSaved = useCallback((albumId: number) => {
         return data.savedAlbums.some((a) => a.id === albumId);
@@ -220,9 +256,14 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         }));
     }, []);
 
+    const playlistsRef = useRef(data.playlists);
+    useEffect(() => {
+        playlistsRef.current = data.playlists;
+    });
+
     const getPlaylist = useCallback((playlistId: string) => {
-        return data.playlists.find((p) => p.id === playlistId);
-    }, [data.playlists]);
+        return playlistsRef.current.find((p) => p.id === playlistId);
+    }, []); // stable — reads from ref, no deps
 
     return (
         <PersistenceContext.Provider
@@ -233,6 +274,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
                 toggleSaveAlbum,
                 updateSettings,
                 clearAll,
+                reloadFromStorage,
                 isLiked,
                 isAlbumSaved,
                 createPlaylist,

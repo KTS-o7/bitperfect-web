@@ -1,7 +1,7 @@
 // apps/web/contexts/AuthContext.tsx
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { User, AuthError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { syncToCloud } from '@/lib/db/sync';
@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
 
   useEffect(() => {
     const checkSession = async () => {

@@ -24,8 +24,12 @@ import {
 } from "@/lib/audioPlayerTypes";
 import { getPersistedState, savePersistedState } from "@/lib/audioStorage";
 import { updateMediaSessionMetadata, updateMediaSessionPlaybackState } from "@/lib/mediaSession";
+import { useLyrics } from "@/hooks/useLyrics";
 
-const AudioPlayerContext = createContext<AudioPlayerContextValue | null>(null);
+// State context — updates on every timeupdate (~4Hz during playback)
+const AudioPlayerStateContext = createContext<AudioPlayerContextValue | null>(null);
+// Actions context — stable after mount, never triggers re-renders on its own
+const AudioPlayerActionsContext = createContext<AudioPlayerContextValue | null>(null);
 
 // Generate multiple artwork sizes for Media Session API
 function getMediaSessionArtwork(coverId: string | number | undefined): MediaImage[] {
@@ -73,6 +77,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   });
 
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+
+  const {
+    lyrics,
+    currentLineIndex,
+    isLoading: isLoadingLyrics,
+    error: lyricsError,
+    hasLyrics,
+    hasSyncedLyrics,
+  } = useLyrics(state.currentTrack, state.currentTime, state.isPlaying);
 
   const preloadCache = useRef<Map<number, string>>(new Map());
   const originalQueueBeforeShuffle = useRef<Track[]>([]);
@@ -404,7 +417,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         };
       });
     },
-    [safePlay]
+    [safePlay, addToHistory]
   );
 
   const playNext = useCallback(async () => {
@@ -471,7 +484,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       return prev;
     });
-  }, [safePlay]);
+  }, [safePlay, addToHistory]);
 
   // Keep ref updated
   useEffect(() => {
@@ -539,7 +552,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       return prev;
     });
-  }, [safePlay]);
+  }, [safePlay, addToHistory]);
 
   const toggleShuffle = useCallback(() => {
     setState((prev) => {
@@ -687,9 +700,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     return audioRef.current;
   }, []);
 
-  const value = useMemo(
+  // Stable actions — only change if their own deps change (rarely)
+  const actions = useMemo(
     () => ({
-      ...state,
       playTrack,
       addToQueue,
       setQueue,
@@ -707,11 +720,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       removeFromQueue,
       clearQueue,
       getAudioElement,
-      isStatsOpen,
       setIsStatsOpen,
     }),
     [
-      state,
       playTrack,
       addToQueue,
       setQueue,
@@ -729,21 +740,47 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       removeFromQueue,
       clearQueue,
       getAudioElement,
-      isStatsOpen,
+      setIsStatsOpen,
     ]
   );
 
+  // Volatile state — changes on every timeupdate during playback
+  const stateValue = useMemo(
+    () => ({
+      ...state,
+      isStatsOpen,
+      lyrics,
+      currentLineIndex,
+      isLoadingLyrics,
+      lyricsError,
+      hasLyrics,
+      hasSyncedLyrics,
+      ...actions,
+    }),
+    [state, isStatsOpen, lyrics, currentLineIndex, isLoadingLyrics, lyricsError, hasLyrics, hasSyncedLyrics, actions]
+  );
+
   return (
-    <AudioPlayerContext.Provider value={value}>
-      {children}
-    </AudioPlayerContext.Provider>
+    <AudioPlayerActionsContext.Provider value={actions as unknown as AudioPlayerContextValue}>
+      <AudioPlayerStateContext.Provider value={stateValue}>
+        {children}
+      </AudioPlayerStateContext.Provider>
+    </AudioPlayerActionsContext.Provider>
   );
 }
 
 export function useAudioPlayer() {
-  const context = useContext(AudioPlayerContext);
+  const context = useContext(AudioPlayerStateContext);
   if (!context) {
     throw new Error("useAudioPlayer must be used within AudioPlayerProvider");
+  }
+  return context;
+}
+
+export function useAudioPlayerActions() {
+  const context = useContext(AudioPlayerActionsContext);
+  if (!context) {
+    throw new Error("useAudioPlayerActions must be used within AudioPlayerProvider");
   }
   return context;
 }
@@ -751,7 +788,7 @@ export function useAudioPlayer() {
 // Convenience hooks for accessing specific parts of the audio player state
 // These replace the old split contexts and avoid event-based synchronization
 export function usePlaybackState() {
-  const context = useContext(AudioPlayerContext);
+  const context = useContext(AudioPlayerStateContext);
   if (!context) {
     throw new Error("usePlaybackState must be used within AudioPlayerProvider");
   }
@@ -775,7 +812,7 @@ export function usePlaybackState() {
 }
 
 export function useQueue() {
-  const context = useContext(AudioPlayerContext);
+  const context = useContext(AudioPlayerStateContext);
   if (!context) {
     throw new Error("useQueue must be used within AudioPlayerProvider");
   }
