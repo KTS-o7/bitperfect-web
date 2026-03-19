@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { storage, UserData, DEFAULT_USER_DATA, Playlist } from "@/lib/storage";
 import { Track, Album } from "@bitperfect/shared/api";
 import { useToast } from "./ToastContext";
@@ -30,9 +30,14 @@ const PersistenceContext = createContext<PersistenceContextType | undefined>(und
 export function PersistenceProvider({ children }: { children: React.ReactNode }) {
     const [data, setData] = useState<UserData>(DEFAULT_USER_DATA);
     const [isLoaded, setIsLoaded] = useState(false);
+    const likedTrackIdSet = useMemo(
+        () => new Set(data.likedTracks.map((t) => t.id)),
+        [data.likedTracks]
+    );
     const { success, toast } = useToast();
     const { isAuthenticated } = useAuth();
     const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Load from storage on mount
     useEffect(() => {
@@ -43,11 +48,23 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     // Note: Sync is now manual only (on login/logout and via button)
     // to avoid hitting rate limits
 
-    // Save to storage whenever data changes
+    // Save to storage whenever data changes (debounced by 500ms)
     useEffect(() => {
-        if (isLoaded) {
-            storage.save(data);
+        if (!isLoaded) return;
+
+        if (saveTimerRef.current) {
+            clearTimeout(saveTimerRef.current);
         }
+
+        saveTimerRef.current = setTimeout(() => {
+            storage.save(data);
+        }, 500);
+
+        return () => {
+            if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+            }
+        };
     }, [data, isLoaded]);
 
     const toggleLikeTrack = useCallback((track: Track) => {
@@ -110,8 +127,8 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }, []);
 
     const isLiked = useCallback((trackId: number) => {
-        return data.likedTracks.some((t) => t.id === trackId);
-    }, [data.likedTracks]);
+        return likedTrackIdSet.has(trackId);
+    }, [likedTrackIdSet]);
 
     const isAlbumSaved = useCallback((albumId: number) => {
         return data.savedAlbums.some((a) => a.id === albumId);
