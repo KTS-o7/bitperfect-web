@@ -404,7 +404,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         };
       });
     },
-    [safePlay]
+    [safePlay, addToHistory]
   );
 
   const playNext = useCallback(async () => {
@@ -471,7 +471,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       return prev;
     });
-  }, [safePlay]);
+  }, [safePlay, addToHistory]);
 
   // Keep ref updated
   useEffect(() => {
@@ -539,7 +539,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       return prev;
     });
-  }, [safePlay]);
+  }, [safePlay, addToHistory]);
 
   const toggleShuffle = useCallback(() => {
     setState((prev) => {

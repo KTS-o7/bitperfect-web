@@ -22,6 +22,7 @@ interface PersistenceContextType extends UserData {
     reorderPlaylistTracks: (playlistId: string, trackIds: number[]) => void;
     updatePlaylist: (playlistId: string, updates: Partial<Playlist>) => void;
     getPlaylist: (playlistId: string) => Playlist | undefined;
+    reloadFromStorage: () => void;
 }
 
 const PersistenceContext = createContext<PersistenceContextType | undefined>(undefined);
@@ -103,6 +104,10 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         storage.clear();
         success("All local data has been cleared");
     }, [success]);
+
+    const reloadFromStorage = useCallback(() => {
+        setData(storage.load());
+    }, []);
 
     const isLiked = useCallback((trackId: number) => {
         return data.likedTracks.some((t) => t.id === trackId);
@@ -233,6 +238,7 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
                 toggleSaveAlbum,
                 updateSettings,
                 clearAll,
+                reloadFromStorage,
                 isLiked,
                 isAlbumSaved,
                 createPlaylist,
