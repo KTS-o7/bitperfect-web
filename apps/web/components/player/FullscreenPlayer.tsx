@@ -318,11 +318,11 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
     [queue, sortableIds, currentQueueIndex, reorderQueue],
   );
 
-  const getCoverUrlFn = () => {
+  const getCoverUrlFn = useCallback(() => {
     const coverId = currentTrack?.album?.cover || currentTrack?.album?.id;
     if (!coverId) return null;
     return getCoverUrl(coverId, "640");
-  };
+  }, [currentTrack]);
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
