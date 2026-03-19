@@ -75,7 +75,21 @@ export class LosslessAPI {
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          const response = await fetch(url, { signal: options.signal });
+          const perAttemptController = new AbortController();
+          const timeoutId = setTimeout(() => perAttemptController.abort(), 5000);
+
+          const effectiveSignal = options.signal
+            ? (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any
+              ? (AbortSignal as unknown as { any: (signals: AbortSignal[]) => AbortSignal }).any([options.signal, perAttemptController.signal])
+              : perAttemptController.signal
+            : perAttemptController.signal;
+
+          let response: Response;
+          try {
+            response = await fetch(url, { signal: effectiveSignal });
+          } finally {
+            clearTimeout(timeoutId);
+          }
 
           if (response.status === 429) {
             throw new Error(RATE_LIMIT_ERROR_MESSAGE);
