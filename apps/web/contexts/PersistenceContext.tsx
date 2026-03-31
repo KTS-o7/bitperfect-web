@@ -5,7 +5,6 @@ import { storage, UserData, DEFAULT_USER_DATA, Playlist } from "@/lib/storage";
 import { Track, Album } from "@bitperfect/shared/api";
 import { useToast } from "./ToastContext";
 import { useAuth } from "./AuthContext";
-import { syncToCloud } from "@/lib/db/sync";
 
 interface PersistenceContextType extends UserData {
     toggleLikeTrack: (track: Track) => void;
