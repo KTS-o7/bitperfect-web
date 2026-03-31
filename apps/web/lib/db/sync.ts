@@ -40,6 +40,14 @@ interface DbUserSettings {
   updated_at: string;
 }
 
+interface DbHistoryEntry {
+  id: string;
+  user_id: string;
+  track_id: string;
+  track_data: Record<string, unknown>;
+  listened_at: string;
+}
+
 export async function syncFromCloud(): Promise<SyncResult> {
   const supabase = createClient();
   
@@ -49,10 +57,11 @@ export async function syncFromCloud(): Promise<SyncResult> {
       return { success: false, message: 'Not logged in' };
     }
 
-    const [playlistsResult, favoritesResult, settingsResult] = await Promise.all([
+    const [playlistsResult, favoritesResult, settingsResult, historyResult] = await Promise.all([
       supabase.from('playlists').select('*').eq('user_id', user.id),
       supabase.from('favorites').select('*').eq('user_id', user.id),
       supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
+      supabase.from('listening_history').select('*').eq('user_id', user.id).order('listened_at', { ascending: false }).limit(100),
     ]);
 
     const localData = storage.load();
@@ -80,6 +89,9 @@ export async function syncFromCloud(): Promise<SyncResult> {
     const mergedLikedTracks = mergeTracks(localData.likedTracks, cloudLikedTracks);
     const mergedSavedAlbums = mergeAlbums(localData.savedAlbums, cloudSavedAlbums);
 
+    const cloudHistory: Track[] = (historyResult.data || [])
+      .map((h: DbHistoryEntry) => h.track_data as unknown as Track);
+
     let mergedSettings = localData.settings;
     if (settingsResult.data) {
       const dbSettings = settingsResult.data as DbUserSettings;
@@ -91,7 +103,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
 
     const mergedData: UserData = {
       likedTracks: mergedLikedTracks,
-      history: localData.history,
+      history: mergeHistory(localData.history, cloudHistory),
       savedAlbums: mergedSavedAlbums,
       playlists: mergedPlaylists,
       settings: mergedSettings,
@@ -149,6 +161,26 @@ export async function syncToCloud(): Promise<SyncResult> {
       }
     }
 
+    // Delete playlists removed locally
+    const localPlaylistIds = localData.playlists
+      .filter(p => isValidUUID(p.id))
+      .map(p => p.id);
+
+    if (localPlaylistIds.length > 0) {
+      const { error: deletePlaylistError } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('user_id', user.id)
+        .not('id', 'in', `(${localPlaylistIds.map(id => `"${id}"`).join(',')})`);
+      if (deletePlaylistError) console.error('Delete playlists error:', deletePlaylistError);
+    } else {
+      const { error: deletePlaylistError } = await supabase
+        .from('playlists')
+        .delete()
+        .eq('user_id', user.id);
+      if (deletePlaylistError) console.error('Delete playlists error:', deletePlaylistError);
+    }
+
     const favoriteRows = localData.likedTracks.map((track: Track) => ({
       user_id: user.id,
       type: 'track' as const,
@@ -183,6 +215,62 @@ export async function syncToCloud(): Promise<SyncResult> {
       
       if (albumError) {
         console.error('Album sync error:', albumError);
+      }
+    }
+
+    // Delete track favorites no longer present locally
+    const localTrackIds = localData.likedTracks.map(t => String(t.id));
+    if (localTrackIds.length > 0) {
+      const { error: deleteTrackFavError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'track')
+        .not('item_id', 'in', `(${localTrackIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteTrackFavError) console.error('Delete track favorites error:', deleteTrackFavError);
+    } else {
+      const { error: deleteTrackFavError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'track');
+      if (deleteTrackFavError) console.error('Delete track favorites error:', deleteTrackFavError);
+    }
+
+    // Delete album favorites no longer present locally
+    const localAlbumIds = localData.savedAlbums.map(a => String(a.id));
+    if (localAlbumIds.length > 0) {
+      const { error: deleteAlbumFavError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'album')
+        .not('item_id', 'in', `(${localAlbumIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteAlbumFavError) console.error('Delete album favorites error:', deleteAlbumFavError);
+    } else {
+      const { error: deleteAlbumFavError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('type', 'album');
+      if (deleteAlbumFavError) console.error('Delete album favorites error:', deleteAlbumFavError);
+    }
+
+    // Sync listening history
+    const historyRows = localData.history.map((track: Track) => ({
+      user_id: user.id,
+      track_id: String(track.id),
+      track_data: track as unknown as Record<string, unknown>,
+    }));
+
+    if (historyRows.length > 0) {
+      const { error: historyError } = await supabase
+        .from('listening_history')
+        .upsert(historyRows, { onConflict: 'user_id,track_id' });
+
+      if (historyError) {
+        console.error('History sync error:', historyError);
+        // Non-fatal: don't return early
       }
     }
 
@@ -264,4 +352,15 @@ function mergeAlbums(local: Album[], cloud: Album[]): Album[] {
   });
   
   return Array.from(map.values());
+}
+
+function mergeHistory(local: Track[], cloud: Track[]): Track[] {
+  const map = new Map<number, Track>();
+  local.forEach(t => map.set(t.id, t));
+  cloud.forEach(t => {
+    if (!map.has(t.id)) {
+      map.set(t.id, t);
+    }
+  });
+  return Array.from(map.values()).slice(0, 100);
 }
