@@ -178,7 +178,6 @@ describe('syncFromCloud merges history from cloud', () => {
       user_id: 'user-123',
       track_id: '42',
       track_data: cloudTrack,
-      listened_at: new Date().toISOString(),
     };
 
     const supabase = buildSupabaseMock({
