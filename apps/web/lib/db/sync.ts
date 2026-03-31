@@ -14,8 +14,8 @@ interface DbPlaylist {
   name: string;
   description: string | null;
   cover_url: string | null;
-  track_ids: string[];
   tracks_data: PlaylistTrack[] | null;
+  color: string | null;
   is_public: boolean;
   created_at: string;
   updated_at: string;
@@ -32,10 +32,7 @@ interface DbFavorite {
 
 interface DbUserSettings {
   user_id: string;
-  theme: string;
   audio_quality: string;
-  auto_play: boolean;
-  crossfade_seconds: number;
   settings_json: Record<string, unknown>;
   updated_at: string;
 }
@@ -70,9 +67,10 @@ export async function syncFromCloud(): Promise<SyncResult> {
       id: p.id,
       name: p.name,
       description: p.description || undefined,
-      trackIds: (p.track_ids || []).map(id => parseInt(String(id), 10)),
+      trackIds: ((p.tracks_data || []) as PlaylistTrack[]).map(t => t.id),
       tracks: (p.tracks_data || []) as PlaylistTrack[],
       coverArt: p.cover_url || undefined,
+      color: p.color || undefined,
       createdAt: p.created_at,
       updatedAt: p.updated_at,
     }));
@@ -96,7 +94,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
     if (settingsResult.data) {
       const dbSettings = settingsResult.data as DbUserSettings;
       mergedSettings = {
-        quality: (dbSettings.audio_quality as 'LOW' | 'HIGH' | 'LOSSLESS') || 'LOSSLESS',
+        quality: ((dbSettings.audio_quality?.toUpperCase() || 'LOSSLESS') as 'LOW' | 'HIGH' | 'LOSSLESS'),
         ...(dbSettings.settings_json as Record<string, unknown>),
       };
     }
@@ -144,8 +142,8 @@ export async function syncToCloud(): Promise<SyncResult> {
       name: p.name,
       description: p.description || null,
       cover_url: p.coverArt || null,
-      track_ids: p.trackIds.map(String),
       tracks_data: p.tracks as unknown as Record<string, unknown>[],
+      color: p.color || null,
       is_public: false,
       updated_at: new Date().toISOString(),
     }));
@@ -274,14 +272,13 @@ export async function syncToCloud(): Promise<SyncResult> {
       }
     }
 
+    const qualityValue = (localData.settings.quality || 'LOSSLESS').toUpperCase() as 'LOW' | 'HIGH' | 'LOSSLESS';
+
     const { error: settingsError } = await supabase
       .from('user_settings')
       .upsert({
         user_id: user.id,
-        theme: 'dark',
-        audio_quality: localData.settings.quality || 'LOSSLESS',
-        auto_play: true,
-        crossfade_seconds: 0,
+        audio_quality: qualityValue,
         settings_json: localData.settings as unknown as Record<string, unknown>,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });

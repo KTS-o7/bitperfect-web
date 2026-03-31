@@ -45,8 +45,8 @@ export interface Database {
           name: string
           description: string | null
           cover_url: string | null
-          track_ids: string[]
-          tracks_data: Json | null
+          color: string | null
+          tracks_data: Json
           is_public: boolean
           created_at: string
           updated_at: string
@@ -57,7 +57,7 @@ export interface Database {
           name: string
           description?: string | null
           cover_url?: string | null
-          track_ids?: string[]
+          color?: string | null
           tracks_data?: Json | null
           is_public?: boolean
           created_at?: string
@@ -69,7 +69,7 @@ export interface Database {
           name?: string
           description?: string | null
           cover_url?: string | null
-          track_ids?: string[]
+          color?: string | null
           tracks_data?: Json | null
           is_public?: boolean
           created_at?: string
@@ -80,7 +80,7 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          type: 'album' | 'artist' | 'track' | 'playlist'
+          type: 'album' | 'track'
           item_id: string
           item_data: Json | null
           created_at: string
@@ -88,7 +88,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          type: 'album' | 'artist' | 'track' | 'playlist'
+          type: 'album' | 'track'
           item_id: string
           item_data?: Json | null
           created_at?: string
@@ -96,7 +96,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          type?: 'album' | 'artist' | 'track' | 'playlist'
+          type?: 'album' | 'track'
           item_id?: string
           item_data?: Json | null
           created_at?: string
@@ -108,48 +108,36 @@ export interface Database {
           user_id: string
           track_id: string
           track_data: Json
-          listened_at: string
         }
         Insert: {
           id?: string
           user_id: string
           track_id: string
           track_data: Json
-          listened_at?: string
         }
         Update: {
           id?: string
           user_id?: string
           track_id?: string
           track_data?: Json
-          listened_at?: string
         }
       }
       user_settings: {
         Row: {
           user_id: string
-          theme: string
           audio_quality: string
-          auto_play: boolean
-          crossfade_seconds: number
           settings_json: Json
           updated_at: string
         }
         Insert: {
           user_id: string
-          theme?: string
           audio_quality?: string
-          auto_play?: boolean
-          crossfade_seconds?: number
           settings_json?: Json
           updated_at?: string
         }
         Update: {
           user_id?: string
-          theme?: string
           audio_quality?: string
-          auto_play?: boolean
-          crossfade_seconds?: number
           settings_json?: Json
           updated_at?: string
         }
