@@ -167,16 +167,18 @@ export async function syncToCloud(): Promise<SyncResult> {
       .map(p => p.id);
 
     if (localPlaylistIds.length > 0) {
-      await supabase
+      const { error: deletePlaylistError } = await supabase
         .from('playlists')
         .delete()
         .eq('user_id', user.id)
-        .not('id', 'in', `(${localPlaylistIds.join(',')})`);
+        .not('id', 'in', `(${localPlaylistIds.map(id => `"${id}"`).join(',')})`);
+      if (deletePlaylistError) console.error('Delete playlists error:', deletePlaylistError);
     } else {
-      await supabase
+      const { error: deletePlaylistError } = await supabase
         .from('playlists')
         .delete()
         .eq('user_id', user.id);
+      if (deletePlaylistError) console.error('Delete playlists error:', deletePlaylistError);
     }
 
     const favoriteRows = localData.likedTracks.map((track: Track) => ({
@@ -219,35 +221,39 @@ export async function syncToCloud(): Promise<SyncResult> {
     // Delete track favorites no longer present locally
     const localTrackIds = localData.likedTracks.map(t => String(t.id));
     if (localTrackIds.length > 0) {
-      await supabase
+      const { error: deleteTrackFavError } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
         .eq('type', 'track')
-        .not('item_id', 'in', `(${localTrackIds.join(',')})`);
+        .not('item_id', 'in', `(${localTrackIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteTrackFavError) console.error('Delete track favorites error:', deleteTrackFavError);
     } else {
-      await supabase
+      const { error: deleteTrackFavError } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
         .eq('type', 'track');
+      if (deleteTrackFavError) console.error('Delete track favorites error:', deleteTrackFavError);
     }
 
     // Delete album favorites no longer present locally
     const localAlbumIds = localData.savedAlbums.map(a => String(a.id));
     if (localAlbumIds.length > 0) {
-      await supabase
+      const { error: deleteAlbumFavError } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
         .eq('type', 'album')
-        .not('item_id', 'in', `(${localAlbumIds.join(',')})`);
+        .not('item_id', 'in', `(${localAlbumIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteAlbumFavError) console.error('Delete album favorites error:', deleteAlbumFavError);
     } else {
-      await supabase
+      const { error: deleteAlbumFavError } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
         .eq('type', 'album');
+      if (deleteAlbumFavError) console.error('Delete album favorites error:', deleteAlbumFavError);
     }
 
     // Sync listening history
@@ -255,7 +261,6 @@ export async function syncToCloud(): Promise<SyncResult> {
       user_id: user.id,
       track_id: String(track.id),
       track_data: track as unknown as Record<string, unknown>,
-      listened_at: new Date().toISOString(),
     }));
 
     if (historyRows.length > 0) {

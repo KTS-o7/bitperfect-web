@@ -17,29 +17,6 @@ Object.defineProperty(globalThis, 'window', { value: {}, writable: true });
 
 // ---------- Supabase mock helpers ----------
 
-/** Build a chainable mock that records the last resolved value */
-function makeChain(resolvedValue: { data: unknown; error: null }) {
-  const handler: ProxyHandler<object> = {
-    get(_target, _prop) {
-      if (_prop === 'then') return undefined; // not a promise itself
-      // every method call returns a new proxy that also resolves to the value
-      return (..._args: unknown[]) => new Proxy(resolvedValue as object, {
-        get(t, p) {
-          if (p === 'then') {
-            // act as a thenable
-            return (resolve: (v: unknown) => void) => resolve(resolvedValue);
-          }
-          if (typeof (t as Record<string, unknown>)[p as string] !== 'undefined') {
-            return (t as Record<string, unknown>)[p as string];
-          }
-          return (..._a: unknown[]) => new Proxy(t, handler);
-        },
-      });
-    },
-  };
-  return new Proxy({} as object, handler);
-}
-
 // Spy-aware builder: returns an object whose methods are vi.fn() stubs
 // that keep returning `this` so chains work, with a final async resolution.
 function buildSupabaseMock(overrides: Record<string, Record<string, unknown>> = {}) {
