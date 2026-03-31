@@ -46,6 +46,7 @@ export interface Database {
           description: string | null
           cover_url: string | null
           track_ids: string[]
+          tracks_data: Json | null
           is_public: boolean
           created_at: string
           updated_at: string
@@ -57,6 +58,7 @@ export interface Database {
           description?: string | null
           cover_url?: string | null
           track_ids?: string[]
+          tracks_data?: Json | null
           is_public?: boolean
           created_at?: string
           updated_at?: string
@@ -68,6 +70,7 @@ export interface Database {
           description?: string | null
           cover_url?: string | null
           track_ids?: string[]
+          tracks_data?: Json | null
           is_public?: boolean
           created_at?: string
           updated_at?: string
@@ -97,6 +100,29 @@ export interface Database {
           item_id?: string
           item_data?: Json | null
           created_at?: string
+        }
+      }
+      listening_history: {
+        Row: {
+          id: string
+          user_id: string
+          track_id: string
+          track_data: Json
+          listened_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          track_id: string
+          track_data: Json
+          listened_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          track_id?: string
+          track_data?: Json
+          listened_at?: string
         }
       }
       user_settings: {
