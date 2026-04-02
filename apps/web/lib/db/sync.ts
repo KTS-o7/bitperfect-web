@@ -281,6 +281,23 @@ export async function syncToCloud(): Promise<SyncResult> {
       }
     }
 
+    // Delete history entries no longer present locally
+    const localHistoryIds = localData.history.map(t => String(t.id));
+    if (localHistoryIds.length > 0) {
+      const { error: deleteHistoryError } = await supabase
+        .from('listening_history')
+        .delete()
+        .eq('user_id', user.id)
+        .not('track_id', 'in', `(${localHistoryIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteHistoryError) console.error('Delete history error:', deleteHistoryError);
+    } else {
+      const { error: deleteHistoryError } = await supabase
+        .from('listening_history')
+        .delete()
+        .eq('user_id', user.id);
+      if (deleteHistoryError) console.error('Delete history error:', deleteHistoryError);
+    }
+
     const qualityValue = (localData.settings.quality || 'LOSSLESS').toUpperCase() as 'LOW' | 'HIGH' | 'LOSSLESS';
 
     const { error: settingsError } = await supabase
