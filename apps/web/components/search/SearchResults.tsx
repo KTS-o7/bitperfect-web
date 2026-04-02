@@ -1,13 +1,8 @@
 "use client";
 
 import { Track, Album } from "@/lib/api/types";
-import {
-  useAudioPlayerActions,
-  usePlaybackState,
-  useQueue,
-} from "@/contexts/AudioPlayerContext";
-import { useState, useCallback } from "react";
 import React from "react";
+import { useWindowSize } from "@/hooks/useWindowSize";
 import AlbumCard from "./AlbumCard";
 import ArtistCard from "./ArtistCard";
 import PlaylistCard from "./PlaylistCard";
@@ -78,18 +73,7 @@ export function SearchResults({
   onLoadMore,
   prefetchTab,
 }: SearchResultsProps) {
-  const { isPlaying } = usePlaybackState();
-  const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayerActions();
-
-  const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
-
-  const [windowDimensions, setWindowDimensions] = useState(() => ({
-    width: typeof window !== "undefined" ? window.innerWidth : 0,
-    height: typeof window !== "undefined" ? window.innerHeight : 0,
-  }));
-
-  const isMobile = windowDimensions.width > 0 && windowDimensions.width < 1024;
+  const windowDimensions = useWindowSize();
 
   const allTabs: { id: SearchContentType; label: string; icon: LucideIcon }[] = [
     { id: "tracks", label: "Songs", icon: Music2 },
@@ -99,29 +83,6 @@ export function SearchResults({
   ];
 
   const tabs = allTabs.filter((tab) => tab.id !== "playlists");
-
-  const handleTrackClick = async (track: Track, index: number) => {
-    if (loadingTrackId === track.id) return;
-
-    setLoadingTrackId(track.id);
-    try {
-      if (tracks) {
-        await setQueue(tracks, index);
-      }
-    } catch (error) {
-      console.error("Error playing track:", error);
-    } finally {
-      setLoadingTrackId(null);
-    }
-  };
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   if (isLoading) {
     return <SkeletonRows />;
