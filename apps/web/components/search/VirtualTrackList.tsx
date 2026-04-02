@@ -20,7 +20,7 @@ export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProp
   const { setQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
   const { width: windowWidth } = useWindowSize();
-  const isMobile = windowWidth > 0 && windowWidth < 768;
+  const isMobile = windowWidth > 0 && windowWidth < 1024;
 
   const handleTrackClick = useCallback(async (track: Track, index: number) => {
     if (loadingTrackId === track.id) return;
