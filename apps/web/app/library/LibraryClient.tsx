@@ -3,7 +3,7 @@
 
 import { usePersistence } from "@/contexts/PersistenceContext";
 import {
-    useAudioPlayer,
+    useAudioPlayerActions,
     usePlaybackState,
     useQueue,
 } from "@/contexts/AudioPlayerContext";
@@ -21,7 +21,7 @@ export function LibraryClient() {
     const { likedTracks, history, toggleLikeTrack, isLiked } = usePersistence();
     const { isPlaying } = usePlaybackState();
     const { currentTrack } = useQueue();
-    const { setQueue, togglePlayPause } = useAudioPlayer();
+    const { setQueue, togglePlayPause } = useAudioPlayerActions();
 
     const [activeTab, setActiveTab] = useState<LibraryTab>("liked");
     const [showCreateModal, setShowCreateModal] = useState(false);

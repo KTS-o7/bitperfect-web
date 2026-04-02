@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Album, Track } from "@/lib/api/types";
 import {
-  useAudioPlayer,
+  useAudioPlayerActions,
   usePlaybackState,
   useQueue,
 } from "@/contexts/AudioPlayerContext";
@@ -26,8 +26,8 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
 
-  // Still need AudioPlayerContext for methods
-  const { setQueue, togglePlayPause } = useAudioPlayer();
+  // Still need AudioPlayerActionsContext for methods
+  const { setQueue, togglePlayPause } = useAudioPlayerActions();
 
   const { toggleLikeTrack, isLiked } = usePersistence();
 

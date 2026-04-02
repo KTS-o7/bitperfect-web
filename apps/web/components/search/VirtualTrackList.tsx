@@ -5,7 +5,7 @@ import { List } from "react-window";
 import { Track } from "@/lib/api/types";
 import TrackRow from "./TrackRow";
 import MobileTrackRow from "../mobile/MobileTrackRow";
-import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 
 interface VirtualTrackListProps {
   tracks: Track[];
@@ -16,7 +16,7 @@ interface VirtualTrackListProps {
 export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayer();
+  const { setQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 

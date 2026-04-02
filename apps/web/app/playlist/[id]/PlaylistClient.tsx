@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { PlaylistResponse, Track } from "@bitperfect/shared/api";
 import {
-    useAudioPlayer,
+    useAudioPlayerActions,
     usePlaybackState,
     useQueue,
 } from "@/contexts/AudioPlayerContext";
@@ -22,7 +22,7 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
     const router = useRouter();
     const { isPlaying } = usePlaybackState();
     const { currentTrack } = useQueue();
-    const { setQueue, togglePlayPause } = useAudioPlayer();
+    const { setQueue, togglePlayPause } = useAudioPlayerActions();
     const { toggleLikeTrack, isLiked } = usePersistence();
 
     const { playlist, tracks } = playlistData;

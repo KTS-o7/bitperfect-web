@@ -2,7 +2,7 @@
 
 import { Track, Album } from "@/lib/api/types";
 import {
-  useAudioPlayer,
+  useAudioPlayerActions,
   usePlaybackState,
   useQueue,
 } from "@/contexts/AudioPlayerContext";
@@ -80,7 +80,7 @@ export function SearchResults({
 }: SearchResultsProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayer();
+  const { setQueue } = useAudioPlayerActions();
 
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
 

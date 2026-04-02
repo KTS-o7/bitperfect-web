@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { useAudioPlayer, usePlaybackState, useQueue } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerActions, usePlaybackState, useQueue } from "@/contexts/AudioPlayerContext";
 import { api } from "@/lib/api";
 
 interface StatsForNerdsProps {
@@ -28,8 +28,8 @@ export function StatsForNerds({ isOpen, onClose }: StatsForNerdsProps) {
   const { currentTime, volume, isMuted } = usePlaybackState();
   const { currentTrack, currentQuality, streamUrl } = useQueue();
 
-  // Still need AudioPlayerContext for methods
-  const { getAudioElement } = useAudioPlayer();
+  // Still need AudioPlayerActionsContext for methods
+  const { getAudioElement } = useAudioPlayerActions();
 
   const [stats, setStats] = useState<Stats | null>(null);
 

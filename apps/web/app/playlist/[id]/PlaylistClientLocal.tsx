@@ -6,7 +6,7 @@ import { usePersistence } from "@/contexts/PersistenceContext";
 import { Header } from "@/components/layout/Header";
 import { Track } from "@bitperfect/shared/api";
 import { ListMusic, Play, Share2, Trash2, MoreVertical, Heart, Camera } from "lucide-react";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { formatTime, getTrackTitle, getTrackArtists } from "@/lib/api/utils";
 import { generateShareUrl } from "@/lib/shareLinks";
 import { getPlaylistColor, PlaylistTrack } from "@/lib/storage";
@@ -34,7 +34,7 @@ function convertToTrack(playlistTrack: PlaylistTrack): Track {
 
 export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const { getPlaylist, deletePlaylist, removeTrackFromPlaylist, toggleLikeTrack, isLiked } = usePersistence();
-    const { setQueue } = useAudioPlayer();
+    const { setQueue } = useAudioPlayerActions();
     const { success } = useToast();
     const [playlist, setPlaylist] = useState(() => getPlaylist(playlistId));
     const [showMenu, setShowMenu] = useState(false);

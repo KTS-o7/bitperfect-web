@@ -5,7 +5,7 @@ import TrackRow from "../TrackRow";
 import MobileTrackRow from "../../mobile/MobileTrackRow";
 import { VirtualTrackList } from "../VirtualTrackList";
 import { TableHeader } from "../TableHeader";
-import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { useState, useCallback, useEffect } from "react";
 
 interface TrackResultsProps {
@@ -15,7 +15,7 @@ interface TrackResultsProps {
 export function TrackResults({ tracks }: TrackResultsProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayer();
+  const { setQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
   const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
 

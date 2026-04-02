@@ -1,6 +1,6 @@
 "use client";
 
-import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { getTrackTitle, getTrackArtists, getCoverUrl } from "@/lib/api/utils";
 import { Play, Pause, SkipForward, ChevronUp, Heart } from "lucide-react";
 import { motion, PanInfo, useAnimation } from "motion/react";
@@ -16,7 +16,8 @@ interface MiniPlayerProps {
 const SWIPE_UP_THRESHOLD = -50; // Negative because up is negative Y
 
 export function MiniPlayer({ onExpand }: MiniPlayerProps) {
-  const { isPlaying, setIsStatsOpen, togglePlayPause } = useAudioPlayer();
+  const { isPlaying } = usePlaybackState();
+  const { setIsStatsOpen, togglePlayPause } = useAudioPlayerActions();
   const { currentTrack, currentQuality } = useQueue();
   const controls = useAnimation();
   const { toggleLikeTrack, isLiked } = usePersistence();
