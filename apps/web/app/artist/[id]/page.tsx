@@ -2,10 +2,15 @@ import { api } from "@/lib/api";
 import { ArtistClient } from "./ArtistClient";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import { cache } from "react";
 
 interface ArtistPageProps {
     params: Promise<{ id: string }>;
 }
+
+const getArtistCached = cache(async (artistId: number) => {
+  return api.getArtist(artistId);
+});
 
 export default async function ArtistPage({ params }: ArtistPageProps) {
     const { id } = await params;
@@ -16,7 +21,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
     }
 
     try {
-        const artistData = await api.getArtist(artistId);
+        const artistData = await getArtistCached(artistId);
 
         if (!artistData) {
             notFound();
@@ -38,7 +43,7 @@ export async function generateMetadata({
     if (isNaN(artistId)) return { title: "Artist Not Found" };
 
     try {
-        const artistData = await api.getArtist(artistId);
+        const artistData = await getArtistCached(artistId);
         return {
             title: `${artistData.name} - Artist`,
             description: `Listen to top tracks and albums by ${artistData.name}`,
