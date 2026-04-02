@@ -304,11 +304,13 @@ export async function syncToCloud(): Promise<SyncResult> {
 }
 
 export async function performSync(): Promise<SyncResult> {
-  const fromCloud = await syncFromCloud();
-  if (!fromCloud.success) {
-    return fromCloud;
+  // Push local state first (including deletions) so cloud reflects current truth.
+  // Then pull from cloud to merge in changes from other devices.
+  const toCloud = await syncToCloud();
+  if (!toCloud.success) {
+    return toCloud;
   }
-  return await syncToCloud();
+  return await syncFromCloud();
 }
 
 function mergePlaylists(local: Playlist[], cloud: Playlist[]): Playlist[] {
