@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { decodePlaylistFromShare, SharedPlaylist } from "@/lib/shareLinks";
 import { Header } from "@/components/layout/Header";
 import { ListMusic, Play, Plus } from "lucide-react";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { Track } from "@bitperfect/shared/api";
 import Link from "next/link";
@@ -13,7 +13,7 @@ import { AudioPlayer } from "@/components/player/AudioPlayer";
 export default function SharedPlaylistPage() {
     const [playlist, setPlaylist] = useState<SharedPlaylist | null>(null);
     const [isValid, setIsValid] = useState(true);
-    const { setQueue } = useAudioPlayer();
+    const { setQueue } = useAudioPlayerActions();
     const { createPlaylist, addTrackToPlaylist } = usePersistence();
 
     useEffect(() => {

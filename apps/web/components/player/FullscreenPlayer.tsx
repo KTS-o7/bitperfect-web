@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useAudioPlayerActions,
   useAudioPlayer,
   usePlaybackState,
   useQueue,
@@ -225,9 +226,6 @@ function MobileSortableQueueItem({
 
 export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
   const {
-    isPlaying,
-    currentTime,
-    duration,
     togglePlayPause,
     playNext,
     playPrev,
@@ -236,15 +234,11 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
     reorderQueue,
     toggleShuffle,
     toggleRepeat,
-    shuffleActive,
-    repeatMode,
     setIsStatsOpen,
-    lyrics,
-    currentLineIndex,
-    isLoadingLyrics: lyricsLoading,
-    hasLyrics,
-  } = useAudioPlayer();
-  const { currentTrack, queue, currentQueueIndex, currentQuality } = useQueue();
+  } = useAudioPlayerActions();
+  const { isPlaying, currentTime, duration } = usePlaybackState();
+  const { currentTrack, queue, currentQueueIndex, currentQuality, shuffleActive, repeatMode } = useQueue();
+  const { lyrics, currentLineIndex, isLoadingLyrics: lyricsLoading, hasLyrics } = useAudioPlayer();
   const { toggleLikeTrack, isLiked } = usePersistence();
 
   const liked = currentTrack ? isLiked(currentTrack.id) : false;

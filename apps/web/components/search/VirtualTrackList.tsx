@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { List } from "react-window";
 import { Track } from "@/lib/api/types";
 import TrackRow from "./TrackRow";
 import MobileTrackRow from "../mobile/MobileTrackRow";
-import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
+import { useWindowSize } from "@/hooks/useWindowSize";
 
 interface VirtualTrackListProps {
   tracks: Track[];
@@ -16,16 +17,10 @@ interface VirtualTrackListProps {
 export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayer();
+  const { setQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const { width: windowWidth } = useWindowSize();
+  const isMobile = windowWidth > 0 && windowWidth < 768;
 
   const handleTrackClick = useCallback(async (track: Track, index: number) => {
     if (loadingTrackId === track.id) return;

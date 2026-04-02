@@ -81,21 +81,22 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }, [data, isLoaded]);
 
     const toggleLikeTrack = useCallback((track: Track) => {
-        const isCurrentlyLiked = data.likedTracks.some((t) => t.id === track.id);
-
+        let wasLiked = false;
         setData((prev) => {
-            const newLiked = isCurrentlyLiked
+            wasLiked = prev.likedTracks.some((t) => t.id === track.id);
+            const newLiked = wasLiked
                 ? prev.likedTracks.filter((t) => t.id !== track.id)
                 : [track, ...prev.likedTracks];
             return { ...prev, likedTracks: newLiked };
         });
-
-        if (isCurrentlyLiked) {
-            success(`Removed ${track.title} from favorites`);
-        } else {
-            success(`Added ${track.title} to favorites`);
-        }
-    }, [data.likedTracks, success]);
+        Promise.resolve().then(() => {
+            if (wasLiked) {
+                success(`Removed ${track.title} from favorites`);
+            } else {
+                success(`Added ${track.title} to favorites`);
+            }
+        });
+    }, [success]);
 
     const addToHistory = useCallback((track: Track) => {
         setData((prev) => {
@@ -106,21 +107,22 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }, []);
 
     const toggleSaveAlbum = useCallback((album: Album) => {
-        const isCurrentlySaved = data.savedAlbums.some((a) => a.id === album.id);
-
+        let wasSaved = false;
         setData((prev) => {
-            const newSaved = isCurrentlySaved
+            wasSaved = prev.savedAlbums.some((a) => a.id === album.id);
+            const newSaved = wasSaved
                 ? prev.savedAlbums.filter((a) => a.id !== album.id)
                 : [album, ...prev.savedAlbums];
             return { ...prev, savedAlbums: newSaved };
         });
-
-        if (isCurrentlySaved) {
-            success(`Removed ${album.title} from library`);
-        } else {
-            success(`Saved ${album.title} to library`);
-        }
-    }, [data.savedAlbums, success]);
+        Promise.resolve().then(() => {
+            if (wasSaved) {
+                success(`Removed ${album.title} from library`);
+            } else {
+                success(`Saved ${album.title} to library`);
+            }
+        });
+    }, [success]);
 
     const updateSettings = useCallback((settings: Partial<UserData["settings"]>) => {
         setData((prev) => ({
@@ -264,27 +266,44 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         return playlistsRef.current.find((p) => p.id === playlistId);
     }, []); // stable — reads from ref, no deps
 
+    const contextValue = useMemo(() => ({
+        ...data,
+        toggleLikeTrack,
+        addToHistory,
+        toggleSaveAlbum,
+        updateSettings,
+        clearAll,
+        reloadFromStorage,
+        isLiked,
+        isAlbumSaved,
+        createPlaylist,
+        deletePlaylist,
+        addTrackToPlaylist,
+        removeTrackFromPlaylist,
+        reorderPlaylistTracks,
+        updatePlaylist,
+        getPlaylist,
+    }), [
+        data,
+        toggleLikeTrack,
+        addToHistory,
+        toggleSaveAlbum,
+        updateSettings,
+        clearAll,
+        reloadFromStorage,
+        isLiked,
+        isAlbumSaved,
+        createPlaylist,
+        deletePlaylist,
+        addTrackToPlaylist,
+        removeTrackFromPlaylist,
+        reorderPlaylistTracks,
+        updatePlaylist,
+        getPlaylist,
+    ]);
+
     return (
-        <PersistenceContext.Provider
-            value={{
-                ...data,
-                toggleLikeTrack,
-                addToHistory,
-                toggleSaveAlbum,
-                updateSettings,
-                clearAll,
-                reloadFromStorage,
-                isLiked,
-                isAlbumSaved,
-                createPlaylist,
-                deletePlaylist,
-                addTrackToPlaylist,
-                removeTrackFromPlaylist,
-                reorderPlaylistTracks,
-                updatePlaylist,
-                getPlaylist,
-            }}
-        >
+        <PersistenceContext.Provider value={contextValue}>
             {children}
         </PersistenceContext.Provider>
     );

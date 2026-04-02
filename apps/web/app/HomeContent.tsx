@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { SearchResults } from "@/components/search/SearchResults";
 import { MobileSearchHeader } from "@/components/mobile/MobileSearchHeader";
@@ -26,17 +26,6 @@ export function HomeContent() {
   } = useSearch();
 
   const [hasSearched, setHasSearched] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile viewport
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
 
   const handleSearchWithTracking = (query: string) => {
     handleSearch(query);
@@ -48,23 +37,23 @@ export function HomeContent() {
 
   return (
     <div className="min-h-screen">
-      {/* Mobile Header */}
-      {isMobile && (
+      {/* Mobile only — hidden on lg+ */}
+      <div className="block lg:hidden">
         <MobileSearchHeader
           onSearch={handleSearchWithTracking}
           isLoading={isLoading}
         />
-      )}
+      </div>
 
-      {/* Desktop Header */}
-      {!isMobile && (
+      {/* Desktop only — hidden below lg */}
+      <div className="hidden lg:flex">
         <Header>
           <SearchBar
             onSearch={handleSearchWithTracking}
             isLoading={isLoading}
           />
         </Header>
-      )}
+      </div>
 
       {/* Content Area */}
       <div className="max-w-6xl mx-auto px-6 py-8">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAudioPlayer, useQueue } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerActions, useQueue } from "@/contexts/AudioPlayerContext";
 import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
 import { X, Music2, GripVertical } from "lucide-react";
 import { useMemo, useCallback, useEffect } from "react";
@@ -138,7 +138,7 @@ function SortableQueueItem({
 export function Queue({ isOpen, onClose }: QueueProps) {
   const { queue, currentQueueIndex } = useQueue();
   const { removeFromQueue, clearQueue, reorderQueue, setQueue } =
-    useAudioPlayer();
+    useAudioPlayerActions();
 
   const sortableIds = useMemo(
     () => queue.map((track, index) => `${track.id}-${index}`),

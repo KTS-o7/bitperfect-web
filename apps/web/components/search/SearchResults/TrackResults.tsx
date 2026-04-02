@@ -5,8 +5,9 @@ import TrackRow from "../TrackRow";
 import MobileTrackRow from "../../mobile/MobileTrackRow";
 import { VirtualTrackList } from "../VirtualTrackList";
 import { TableHeader } from "../TableHeader";
-import { usePlaybackState, useQueue, useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { useState, useCallback, useEffect } from "react";
+import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
+import { useState, useCallback, useRef } from "react";
+import { useWindowSize } from "@/hooks/useWindowSize";
 
 interface TrackResultsProps {
   tracks: Track[];
@@ -15,20 +16,11 @@ interface TrackResultsProps {
 export function TrackResults({ tracks }: TrackResultsProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayer();
+  const { setQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
-  const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 });
+  const { width, height } = useWindowSize();
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight });
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const isMobile = windowDimensions.width > 0 && windowDimensions.width < 1024;
+  const isMobile = width > 0 && width < 1024;
 
   const handleTrackClick = useCallback(async (track: Track, index: number) => {
     if (loadingTrackId === track.id) return;
@@ -42,16 +34,34 @@ export function TrackResults({ tracks }: TrackResultsProps) {
     }
   }, [tracks, setQueue, loadingTrackId]);
 
+  // Stable per-track click handlers — avoids creating new lambdas on every render
+  // which would defeat React.memo on TrackRow.
+  const clickHandlersRef = useRef<Map<number, () => void>>(new Map());
+  const getClickHandler = useCallback((track: Track, index: number) => {
+    const key = track.id;
+    if (!clickHandlersRef.current.has(key)) {
+      clickHandlersRef.current.set(key, () => handleTrackClick(track, index));
+    }
+    return clickHandlersRef.current.get(key)!;
+  }, [handleTrackClick]);
+
+  // Clear cache whenever handleTrackClick identity changes (e.g. tracks/queue changes)
+  const prevHandleRef = useRef(handleTrackClick);
+  if (prevHandleRef.current !== handleTrackClick) {
+    prevHandleRef.current = handleTrackClick;
+    clickHandlersRef.current.clear();
+  }
+
   if (!tracks || tracks.length === 0) {
     return null;
   }
 
-  if (tracks.length > 50 && windowDimensions.width > 0) {
+  if (tracks.length > 50 && width > 0) {
     return (
       <VirtualTrackList
         tracks={tracks}
-        height={windowDimensions.height - 200}
-        width={windowDimensions.width}
+        height={height - 200}
+        width={width}
       />
     );
   }
@@ -73,7 +83,7 @@ export function TrackResults({ tracks }: TrackResultsProps) {
                 isCurrentTrack={isCurrentTrack}
                 isPlaying={isCurrentTrack && isPlaying}
                 isLoading={loadingTrackId === track.id}
-                onClick={() => handleTrackClick(track, index)}
+                onClick={getClickHandler(track, index)}
                 onAddToQueue={() => {}}
                 onShare={() => {}}
               />
@@ -87,7 +97,7 @@ export function TrackResults({ tracks }: TrackResultsProps) {
               isCurrentTrack={isCurrentTrack}
               isPlaying={isCurrentTrack && isPlaying}
               isLoading={loadingTrackId === track.id}
-              onClick={() => handleTrackClick(track, index)}
+              onClick={getClickHandler(track, index)}
             />
           );
         })}

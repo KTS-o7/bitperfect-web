@@ -2,6 +2,7 @@
 
 import {
   useAudioPlayer,
+  useAudioPlayerActions,
   usePlaybackState,
   useQueue,
 } from "@/contexts/AudioPlayerContext";
@@ -90,8 +91,11 @@ export function AudioPlayer() {
     toggleMute,
     toggleShuffle,
     toggleRepeat,
-    isStatsOpen,
     setIsStatsOpen,
+  } = useAudioPlayerActions();
+
+  const {
+    isStatsOpen,
     lyrics,
     currentLineIndex,
     isLoadingLyrics: lyricsLoading,
