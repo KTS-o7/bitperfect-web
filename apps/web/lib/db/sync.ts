@@ -24,7 +24,7 @@ interface DbPlaylist {
 interface DbFavorite {
   id: string;
   user_id: string;
-  type: 'album' | 'artist' | 'track' | 'playlist';
+  type: 'album' | 'track';
   item_id: string;
   item_data: Record<string, unknown> | null;
   created_at: string;
@@ -42,7 +42,6 @@ interface DbHistoryEntry {
   user_id: string;
   track_id: string;
   track_data: Record<string, unknown>;
-  listened_at: string;
 }
 
 export async function syncFromCloud(): Promise<SyncResult> {
@@ -58,7 +57,7 @@ export async function syncFromCloud(): Promise<SyncResult> {
       supabase.from('playlists').select('*').eq('user_id', user.id),
       supabase.from('favorites').select('*').eq('user_id', user.id),
       supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
-      supabase.from('listening_history').select('*').eq('user_id', user.id).order('listened_at', { ascending: false }).limit(100),
+      supabase.from('listening_history').select('*').eq('user_id', user.id).limit(100),
     ]);
 
     const localData = storage.load();
