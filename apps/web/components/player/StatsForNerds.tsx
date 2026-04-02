@@ -25,7 +25,7 @@ interface Stats {
 
 export function StatsForNerds({ isOpen, onClose }: StatsForNerdsProps) {
   // Use split contexts for state
-  const { currentTime, volume, isMuted } = usePlaybackState();
+  const { volume, isMuted } = usePlaybackState();
   const { currentTrack, currentQuality, streamUrl } = useQueue();
 
   // Still need AudioPlayerActionsContext for methods
@@ -90,7 +90,7 @@ export function StatsForNerds({ isOpen, onClose }: StatsForNerdsProps) {
         trackId: currentTrack.id.toString(),
         quality: currentQuality,
         codec: codec,
-        currentTime: currentTime.toFixed(2) + "s",
+        currentTime: (audio.currentTime ?? 0).toFixed(2) + "s",
         bufferHealth: bufferHealth.toFixed(2) + "s",
         volume: isMuted ? "Muted" : Math.round(volume * 100) + "%",
         cacheSize: cacheInfo,
@@ -109,7 +109,6 @@ export function StatsForNerds({ isOpen, onClose }: StatsForNerdsProps) {
   }, [
     isOpen,
     currentTrack,
-    currentTime,
     volume,
     isMuted,
     currentQuality,
