@@ -232,3 +232,29 @@ describe('syncToCloud uploads history to listening_history', () => {
     expect((rows[0].track_data as Record<string, unknown>).id).toBe(99);
   });
 });
+
+// ============================================================
+// Test 5: syncToCloud deletes cleared history from Supabase
+// ============================================================
+describe('syncToCloud deletes cleared history from Supabase', () => {
+  it('calls listening_history.delete when history is empty', async () => {
+    mockStorage.load.mockReturnValue(emptyLocalData); // history: []
+
+    const supabase = buildSupabaseMock();
+    mockCreateClient.mockReturnValue(supabase as ReturnType<typeof createClient>);
+
+    await syncToCloud();
+
+    expect(supabase.from).toHaveBeenCalledWith('listening_history');
+
+    const histTable = supabase._tables['listening_history'];
+    expect(histTable).toBeDefined();
+    expect(histTable.delete).toHaveBeenCalled();
+
+    const eqCalls = (histTable.eq as ReturnType<typeof vi.fn>).mock.calls;
+    const userIdCall = eqCalls.some(
+      (args: unknown[]) => args[0] === 'user_id' && args[1] === 'user-123'
+    );
+    expect(userIdCall).toBe(true);
+  });
+});

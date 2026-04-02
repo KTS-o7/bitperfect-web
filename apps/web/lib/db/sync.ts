@@ -24,7 +24,7 @@ interface DbPlaylist {
 interface DbFavorite {
   id: string;
   user_id: string;
-  type: 'album' | 'artist' | 'track' | 'playlist';
+  type: 'album' | 'track';
   item_id: string;
   item_data: Record<string, unknown> | null;
   created_at: string;
@@ -42,7 +42,6 @@ interface DbHistoryEntry {
   user_id: string;
   track_id: string;
   track_data: Record<string, unknown>;
-  listened_at: string;
 }
 
 export async function syncFromCloud(): Promise<SyncResult> {
@@ -54,16 +53,26 @@ export async function syncFromCloud(): Promise<SyncResult> {
       return { success: false, message: 'Not logged in' };
     }
 
-    const [playlistsResult, favoritesResult, settingsResult, historyResult] = await Promise.all([
+    const [playlistsResult, favoritesResult, settingsResult, historyResult] = await Promise.allSettled([
       supabase.from('playlists').select('*').eq('user_id', user.id),
       supabase.from('favorites').select('*').eq('user_id', user.id),
       supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
-      supabase.from('listening_history').select('*').eq('user_id', user.id).order('listened_at', { ascending: false }).limit(100),
+      supabase.from('listening_history').select('*').eq('user_id', user.id).limit(100),
     ]);
+
+    const playlistsData = playlistsResult.status === 'fulfilled' ? playlistsResult.value : { data: null, error: null };
+    const favoritesData = favoritesResult.status === 'fulfilled' ? favoritesResult.value : { data: null, error: null };
+    const settingsData = settingsResult.status === 'fulfilled' ? settingsResult.value : { data: null, error: null };
+    const historyData = historyResult.status === 'fulfilled' ? historyResult.value : { data: null, error: null };
+
+    if (playlistsResult.status === 'rejected') console.error('Playlists fetch error:', playlistsResult.reason);
+    if (favoritesResult.status === 'rejected') console.error('Favorites fetch error:', favoritesResult.reason);
+    if (settingsResult.status === 'rejected') console.error('Settings fetch error:', settingsResult.reason);
+    if (historyResult.status === 'rejected') console.error('History fetch error:', historyResult.reason);
 
     const localData = storage.load();
 
-    const cloudPlaylists: Playlist[] = (playlistsResult.data || []).map((p: DbPlaylist) => ({
+    const cloudPlaylists: Playlist[] = (playlistsData.data || []).map((p: DbPlaylist) => ({
       id: p.id,
       name: p.name,
       description: p.description || undefined,
@@ -75,11 +84,11 @@ export async function syncFromCloud(): Promise<SyncResult> {
       updatedAt: p.updated_at,
     }));
 
-    const cloudLikedTracks: Track[] = (favoritesResult.data || [])
+    const cloudLikedTracks: Track[] = (favoritesData.data || [])
       .filter((f: DbFavorite) => f.type === 'track')
       .map((f: DbFavorite) => f.item_data as unknown as Track);
 
-    const cloudSavedAlbums: Album[] = (favoritesResult.data || [])
+    const cloudSavedAlbums: Album[] = (favoritesData.data || [])
       .filter((f: DbFavorite) => f.type === 'album')
       .map((f: DbFavorite) => f.item_data as unknown as Album);
 
@@ -87,12 +96,12 @@ export async function syncFromCloud(): Promise<SyncResult> {
     const mergedLikedTracks = mergeTracks(localData.likedTracks, cloudLikedTracks);
     const mergedSavedAlbums = mergeAlbums(localData.savedAlbums, cloudSavedAlbums);
 
-    const cloudHistory: Track[] = (historyResult.data || [])
+    const cloudHistory: Track[] = (historyData.data || [])
       .map((h: DbHistoryEntry) => h.track_data as unknown as Track);
 
     let mergedSettings = localData.settings;
-    if (settingsResult.data) {
-      const dbSettings = settingsResult.data as DbUserSettings;
+    if (settingsData.data) {
+      const dbSettings = settingsData.data as DbUserSettings;
       mergedSettings = {
         quality: ((dbSettings.audio_quality?.toUpperCase() || 'LOSSLESS') as 'LOW' | 'HIGH' | 'LOSSLESS'),
         ...(dbSettings.settings_json as Record<string, unknown>),
@@ -272,6 +281,23 @@ export async function syncToCloud(): Promise<SyncResult> {
       }
     }
 
+    // Delete history entries no longer present locally
+    const localHistoryIds = localData.history.map(t => String(t.id));
+    if (localHistoryIds.length > 0) {
+      const { error: deleteHistoryError } = await supabase
+        .from('listening_history')
+        .delete()
+        .eq('user_id', user.id)
+        .not('track_id', 'in', `(${localHistoryIds.map(id => `"${id}"`).join(',')})`);
+      if (deleteHistoryError) console.error('Delete history error:', deleteHistoryError);
+    } else {
+      const { error: deleteHistoryError } = await supabase
+        .from('listening_history')
+        .delete()
+        .eq('user_id', user.id);
+      if (deleteHistoryError) console.error('Delete history error:', deleteHistoryError);
+    }
+
     const qualityValue = (localData.settings.quality || 'LOSSLESS').toUpperCase() as 'LOW' | 'HIGH' | 'LOSSLESS';
 
     const { error: settingsError } = await supabase
@@ -295,11 +321,13 @@ export async function syncToCloud(): Promise<SyncResult> {
 }
 
 export async function performSync(): Promise<SyncResult> {
-  const fromCloud = await syncFromCloud();
-  if (!fromCloud.success) {
-    return fromCloud;
+  // Push local state first (including deletions) so cloud reflects current truth.
+  // Then pull from cloud to merge in changes from other devices.
+  const toCloud = await syncToCloud();
+  if (!toCloud.success) {
+    return toCloud;
   }
-  return await syncToCloud();
+  return await syncFromCloud();
 }
 
 function mergePlaylists(local: Playlist[], cloud: Playlist[]): Playlist[] {
