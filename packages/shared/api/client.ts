@@ -1,5 +1,10 @@
 import { APICache } from "./cache";
 import { RATE_LIMIT_ERROR_MESSAGE, deriveTrackQuality, delay } from "./utils";
+import {
+  buildTrackSearchQueries,
+  normalizeSearchQuery,
+  shouldUseFallback,
+} from "../utils/variations";
 import type {
   APISettings,
   SearchResponse,
@@ -18,6 +23,18 @@ import type {
 
 export const DASH_MANIFEST_UNAVAILABLE_CODE = "DASH_MANIFEST_UNAVAILABLE";
 
+type TrackSearchMatchTier = "exact" | "canonical" | "alias";
+
+const TRACK_SEARCH_FALLBACK_THRESHOLD = 5;
+const TRACK_SEARCH_MAX_ALIAS_QUERIES = 2;
+const TRACK_SEARCH_FALLBACK_VERSION = "v4";
+const TRACK_SEARCH_STRONG_MATCH_THRESHOLD = 400;
+const TRACK_SEARCH_MATCH_TIER_WEIGHT: Record<TrackSearchMatchTier, number> = {
+  exact: 3,
+  canonical: 2,
+  alias: 1,
+};
+
 export class LosslessAPI {
   private settings: APISettings;
   private cache: APICache;
@@ -33,11 +50,12 @@ export class LosslessAPI {
     this.streamCache = new Map();
     this.lyricsCache = new Map();
 
-    setInterval(() => {
+    const cleanupInterval = setInterval(() => {
       this.cache.clearExpired();
       this.pruneStreamCache();
       this.pruneLyricsCache();
     }, 1000 * 60 * 5);
+    (cleanupInterval as { unref?: () => void }).unref?.();
   }
 
   private pruneStreamCache(): void {
@@ -210,6 +228,182 @@ export class LosslessAPI {
     return this.buildSearchResponse<T>(section as { items?: T[] });
   }
 
+  private buildTrackFallbackCacheKey(query: string, limit: number): string {
+    return [
+      query.trim(),
+      limit,
+      TRACK_SEARCH_FALLBACK_THRESHOLD,
+      TRACK_SEARCH_FALLBACK_VERSION,
+    ].join("_");
+  }
+
+  private getTrackSearchRelevance(
+    track: Track,
+    normalizedQuery: string,
+    tier: TrackSearchMatchTier = "exact"
+  ): number {
+    if (!normalizedQuery) {
+      return 0;
+    }
+
+    const normalizedTitle = normalizeSearchQuery(track.title);
+    const normalizedArtists = (track.artists ?? (track.artist ? [track.artist] : []))
+      .map((artist) => normalizeSearchQuery(artist.name))
+      .filter(Boolean);
+    const queryWithTrailingSpace = `${normalizedQuery} `;
+    const queryWithLeadingSpace = ` ${normalizedQuery}`;
+    const queryInMiddle = ` ${normalizedQuery} `;
+    const tierPenalty = tier === "exact" ? 0 : tier === "canonical" ? 10 : 25;
+
+    if (normalizedTitle === normalizedQuery) {
+      return 420 - tierPenalty;
+    }
+
+    if (normalizedTitle.startsWith(queryWithTrailingSpace)) {
+      return 380 - tierPenalty;
+    }
+
+    if (
+      normalizedTitle.includes(queryInMiddle) ||
+      normalizedTitle.endsWith(queryWithLeadingSpace)
+    ) {
+      return 250 - tierPenalty;
+    }
+
+    if (normalizedTitle.includes(normalizedQuery)) {
+      return 150 - tierPenalty;
+    }
+
+    if (
+      normalizedArtists.some((artist) => artist === normalizedQuery)
+    ) {
+      return 125 - tierPenalty;
+    }
+
+    if (
+      normalizedArtists.some((artist) => artist.includes(normalizedQuery))
+    ) {
+      return 75 - tierPenalty;
+    }
+
+    return 0;
+  }
+
+  private hasStrongTrackSearchMatch(
+    response: SearchResponse<Track>,
+    normalizedQuery: string
+  ): boolean {
+    if (!normalizedQuery) {
+      return false;
+    }
+
+    return response.items.some(
+      (track) => normalizeSearchQuery(track.title) === normalizedQuery
+    );
+  }
+
+  private mergeAndRankTrackSearchResults(
+    responses: Array<{
+      tier: TrackSearchMatchTier;
+      normalizedQuery: string;
+      response: SearchResponse<Track>;
+    }>,
+    limit: number,
+    totalNumberOfItems: number
+  ): SearchResponse<Track> {
+    const merged = new Map<
+      number,
+      {
+        track: Track;
+        tier: TrackSearchMatchTier;
+        sourceOrder: number;
+        relevance: number;
+      }
+    >();
+
+    let sourceOrder = 0;
+
+    for (const { tier, normalizedQuery, response } of responses) {
+      for (const track of response.items) {
+        sourceOrder += 1;
+        const relevance = this.getTrackSearchRelevance(
+          track,
+          normalizedQuery,
+          tier
+        );
+
+        const existing = merged.get(track.id);
+        if (!existing) {
+          merged.set(track.id, {
+            track,
+            tier,
+            sourceOrder,
+            relevance,
+          });
+          continue;
+        }
+
+        const existingTierWeight = TRACK_SEARCH_MATCH_TIER_WEIGHT[existing.tier];
+        const nextTierWeight = TRACK_SEARCH_MATCH_TIER_WEIGHT[tier];
+        const shouldReplaceTrack =
+          relevance > existing.relevance ||
+          (relevance === existing.relevance &&
+            (nextTierWeight > existingTierWeight ||
+              (nextTierWeight === existingTierWeight &&
+                sourceOrder < existing.sourceOrder)));
+        const primaryTrack = shouldReplaceTrack ? track : existing.track;
+        const hasPopularity =
+          existing.track.popularity != null || track.popularity != null;
+        const mergedPopularity = Math.max(
+          existing.track.popularity ?? 0,
+          track.popularity ?? 0
+        );
+
+        merged.set(track.id, {
+          track: hasPopularity
+            ? { ...primaryTrack, popularity: mergedPopularity }
+            : primaryTrack,
+          tier: shouldReplaceTrack ? tier : existing.tier,
+          sourceOrder: shouldReplaceTrack ? sourceOrder : existing.sourceOrder,
+          relevance: Math.max(existing.relevance, relevance),
+        });
+      }
+    }
+
+    const items = Array.from(merged.values())
+      .sort((left, right) => {
+        const relevanceDelta = right.relevance - left.relevance;
+        if (relevanceDelta !== 0) {
+          return relevanceDelta;
+        }
+
+        const popularityDelta =
+          (right.track.popularity ?? 0) - (left.track.popularity ?? 0);
+        if (popularityDelta !== 0) {
+          return popularityDelta;
+        }
+
+        const tierDelta =
+          TRACK_SEARCH_MATCH_TIER_WEIGHT[right.tier] -
+          TRACK_SEARCH_MATCH_TIER_WEIGHT[left.tier];
+
+        if (tierDelta !== 0) {
+          return tierDelta;
+        }
+
+        return left.sourceOrder - right.sourceOrder;
+      })
+      .slice(0, limit)
+      .map((entry) => entry.track);
+
+    return {
+      items,
+      limit,
+      offset: 0,
+      totalNumberOfItems: Math.max(totalNumberOfItems, items.length),
+    };
+  }
+
   private prepareTrack(track: Track): Track {
     let normalized = track;
 
@@ -347,6 +541,109 @@ export class LosslessAPI {
       console.error("Track search failed:", error);
       return { items: [], limit: 0, offset: 0, totalNumberOfItems: 0 };
     }
+  }
+
+  async searchTracksWithFallback(
+    query: string,
+    options: { signal?: AbortSignal; offset?: number; limit?: number } = {}
+  ): Promise<SearchResponse<Track>> {
+    const { offset = 0, limit = 25, signal } = options;
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery) {
+      return { items: [], limit: 0, offset: 0, totalNumberOfItems: 0 };
+    }
+
+    if (offset > 0) {
+      return this.searchTracks(trimmedQuery, options);
+    }
+
+    const cacheKey = this.buildTrackFallbackCacheKey(trimmedQuery, limit);
+    const cached = (await this.cache.get(
+      "search_tracks_fallback",
+      cacheKey
+    )) as SearchResponse<Track> | null;
+    if (cached) {
+      return cached;
+    }
+
+    const { originalQuery, canonicalQuery, aliasQueries } =
+      buildTrackSearchQueries(trimmedQuery, TRACK_SEARCH_MAX_ALIAS_QUERIES);
+    const normalizedQuery = normalizeSearchQuery(trimmedQuery);
+    const originalResponse = await this.searchTracks(originalQuery, {
+      signal,
+      offset: 0,
+      limit,
+    });
+
+    const responses: Array<{
+      tier: TrackSearchMatchTier;
+      normalizedQuery: string;
+      response: SearchResponse<Track>;
+    }> = [
+      {
+        tier: "exact",
+        normalizedQuery,
+        response: originalResponse,
+      },
+    ];
+
+    const shouldFetchCanonical =
+      shouldUseFallback(
+        originalResponse.items.length,
+        TRACK_SEARCH_FALLBACK_THRESHOLD
+      ) ||
+      !this.hasStrongTrackSearchMatch(originalResponse, normalizedQuery);
+    const shouldFetchAliases = aliasQueries.length > 0;
+
+    if (shouldFetchCanonical || shouldFetchAliases) {
+      const fallbackQueries: Array<{
+        query: string;
+        normalizedQuery: string;
+        tier: TrackSearchMatchTier;
+      }> = [];
+
+      if (canonicalQuery && shouldFetchCanonical) {
+        fallbackQueries.push({
+          query: canonicalQuery,
+          normalizedQuery: normalizeSearchQuery(canonicalQuery),
+          tier: "canonical",
+        });
+      }
+
+      if (shouldFetchAliases) {
+        for (const aliasQuery of aliasQueries) {
+          fallbackQueries.push({
+            query: aliasQuery,
+            normalizedQuery: normalizeSearchQuery(aliasQuery),
+            tier: "alias",
+          });
+        }
+      }
+
+      const fallbackResponses = await Promise.all(
+        fallbackQueries.map(async ({ query: fallbackQuery, normalizedQuery: fallbackNormalizedQuery, tier }) => ({
+          tier,
+          normalizedQuery: fallbackNormalizedQuery,
+          response: await this.searchTracks(fallbackQuery, {
+            signal,
+            offset: 0,
+            limit,
+          }),
+        }))
+      );
+
+      responses.push(...fallbackResponses);
+    }
+
+    const rankedResponse = this.mergeAndRankTrackSearchResults(
+      responses,
+      limit,
+      originalResponse.totalNumberOfItems
+    );
+
+    await this.cache.set("search_tracks_fallback", cacheKey, rankedResponse);
+    return rankedResponse;
   }
 
   async searchAlbums(

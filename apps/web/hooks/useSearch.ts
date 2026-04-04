@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useSearchContext } from "@/contexts/SearchContext";
 
 type SearchContentType = "tracks" | "albums" | "artists" | "playlists";
+const SEARCH_QUERY_VERSION = "enhanced-search-3";
 
 export function useSearch() {
   const queryClient = useQueryClient();
@@ -11,11 +12,11 @@ export function useSearch() {
 
   // Track search query with infinite scroll
   const tracksQuery = useInfiniteQuery({
-    queryKey: ["search", "tracks", query],
+    queryKey: ["search", SEARCH_QUERY_VERSION, "tracks", query],
     queryFn: async ({ pageParam, signal }) => {
       if (!query) return { items: [], totalNumberOfItems: 0, offset: 0, limit: 0 };
       const offset = pageParam ?? 0;
-      const result = await api.searchTracks(query, { offset, limit: 25, signal });
+      const result = await api.searchTracksWithFallback(query, { offset, limit: 25, signal });
       // Override the offset with what we actually requested since API returns wrong offset
       return { ...result, offset };
     },
@@ -37,7 +38,7 @@ export function useSearch() {
 
   // Album search query with infinite scroll
   const albumsQuery = useInfiniteQuery({
-    queryKey: ["search", "albums", query],
+    queryKey: ["search", SEARCH_QUERY_VERSION, "albums", query],
     queryFn: async ({ pageParam, signal }) => {
       if (!query) return { items: [], totalNumberOfItems: 0, offset: 0, limit: 0 };
       const offset = pageParam ?? 0;
@@ -60,7 +61,7 @@ export function useSearch() {
 
   // Artists search query with infinite scroll
   const artistsQuery = useInfiniteQuery({
-    queryKey: ["search", "artists", query],
+    queryKey: ["search", SEARCH_QUERY_VERSION, "artists", query],
     queryFn: async ({ pageParam, signal }) => {
       if (!query) return { items: [], totalNumberOfItems: 0, offset: 0, limit: 0 };
       const offset = pageParam ?? 0;
@@ -84,10 +85,13 @@ export function useSearch() {
   // Search handler - triggers track search and resets to tracks tab
   const handleSearch = useCallback(
     (newQuery: string) => {
+      queryClient.removeQueries({
+        queryKey: ["search", SEARCH_QUERY_VERSION, "tracks", newQuery],
+      });
       setQuery(newQuery);
       setCurrentTab("tracks");
     },
-    [setQuery, setCurrentTab],
+    [queryClient, setQuery, setCurrentTab],
   );
 
   // Tab change handler - fetches data for the selected tab if needed
@@ -102,7 +106,7 @@ export function useSearch() {
   const clearSearch = useCallback(() => {
     setQuery("");
     setCurrentTab("tracks");
-    queryClient.removeQueries({ queryKey: ["search"] });
+    queryClient.removeQueries({ queryKey: ["search", SEARCH_QUERY_VERSION] });
   }, [queryClient, setQuery, setCurrentTab]);
 
   // Flatten paginated results
@@ -121,16 +125,16 @@ export function useSearch() {
 
       const queryKey =
         tab === "tracks"
-          ? ["search", "tracks", query]
+          ? ["search", SEARCH_QUERY_VERSION, "tracks", query]
           : tab === "albums"
-            ? ["search", "albums", query]
-            : ["search", "artists", query];
+            ? ["search", SEARCH_QUERY_VERSION, "albums", query]
+            : ["search", SEARCH_QUERY_VERSION, "artists", query];
 
       queryClient.prefetchInfiniteQuery({
         queryKey,
         queryFn: async ({ pageParam = 0 }) => {
           if (tab === "tracks") {
-            return api.searchTracks(query, { offset: pageParam, limit: 25 });
+            return api.searchTracksWithFallback(query, { offset: pageParam, limit: 25 });
           } else if (tab === "albums") {
             return api.searchAlbums(query, { offset: pageParam, limit: 25 });
           } else {
