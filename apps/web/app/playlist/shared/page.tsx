@@ -158,7 +158,7 @@ export default function SharedPlaylistPage() {
                             </div>
                             <div className="min-w-0">
                                 <div className="text-sm font-medium truncate">{track.title}</div>
-                                <div className="text-xs text-foreground/50 truncate md:hidden">
+                                <div className="text-xs text-foreground/50 truncate lg:hidden">
                                     {track.artist}
                                 </div>
                             </div>

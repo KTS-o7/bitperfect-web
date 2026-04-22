@@ -49,10 +49,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-background transition-colors duration-300">
       <OfflineIndicator />
       {/* Main Content
-          Mobile: pb accounts for MobileNav (64px) + optional MiniPlayer (64px)
-          Desktop (lg+): inline style is overridden to 0; lg:pb-24 handles audio player clearance */}
+          Mobile: paddingBottom accounts for MobileNav (64px) + optional MiniPlayer (64px)
+          Desktop (lg+): lg:pb-24 handles AudioPlayer clearance; inline style reset to 0 */}
       <main
-        className="min-h-screen lg:pb-24"
+        className="min-h-screen lg:!pb-24"
         style={{
           paddingBottom: showMiniPlayer
             ? "calc(64px + 64px + env(safe-area-inset-bottom))"

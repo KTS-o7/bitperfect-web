@@ -67,10 +67,10 @@ function TrackRow({
       onClick={onClick}
       className={`
         group relative grid grid-cols-[32px_36px_1fr_60px] lg:grid-cols-[50px_40px_1fr_180px_120px_80px_100px]
-        gap-2 md:gap-4 items-center
-        px-2 md:px-6 py-2 md:py-3 border-b border-foreground/10 cursor-pointer
+        gap-2 lg:gap-4 items-center
+        px-2 lg:px-6 py-2 lg:py-3 border-b border-foreground/10 cursor-pointer
         transition-all duration-200
-        ${isCurrentTrack ? "border-l-[3px] border-l-foreground pl-[9px] md:pl-[21px]" : "border-l-[3px] border-l-transparent"}
+        ${isCurrentTrack ? "border-l-[3px] border-l-foreground pl-[9px] lg:pl-[21px]" : "border-l-[3px] border-l-transparent"}
         ${isLoading ? "opacity-50 pointer-events-none" : ""}
         hover:bg-foreground/[0.02]
       `}

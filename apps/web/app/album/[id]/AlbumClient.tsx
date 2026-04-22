@@ -164,7 +164,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
         <div className="border-t border-foreground/10">
           {/* Table Header */}
           <div className="sticky top-[65px] z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/10">
-            <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_120px_80px_40px] gap-4 px-6 py-3">
+            <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_120px_80px_40px_40px] gap-4 px-6 py-3">
               <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
                 #
               </span>
@@ -195,7 +195,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
                 <div
                   key={track.id}
                   onClick={() => handlePlayTrack(track, index)}
-                  className={`grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_120px_80px_40px] gap-4 items-center px-6 py-3 border-b border-foreground/10 cursor-pointer transition-all duration-200 hover:bg-foreground/[0.02] ${isCurrent
+                  className={`grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_120px_80px_40px_40px] gap-4 items-center px-6 py-3 border-b border-foreground/10 cursor-pointer transition-all duration-200 hover:bg-foreground/[0.02] ${isCurrent
                     ? "border-l-[3px] border-l-foreground pl-[21px]"
                     : "border-l-[3px] border-l-transparent"
                     }`}

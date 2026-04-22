@@ -60,7 +60,7 @@ export function MobileSearchHeader({
 
   return (
     <header className="sticky top-0 z-30 bg-background border-b border-foreground/10 lg:hidden">
-      <div className="px-4 py-3">
+      <div className="px-6 py-3">
         <AnimatePresence mode="wait">
           {isExpanded ? (
             <motion.form

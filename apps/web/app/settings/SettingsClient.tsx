@@ -109,7 +109,7 @@ export function SettingsClient() {
                         <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-foreground/40 border-b border-foreground/10 pb-2">Playback</h2>
 
                         <div className="space-y-8">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                                 <div>
                                     <h3 className="text-sm font-medium mb-1">Audio Quality</h3>
                                     <p className="text-xs text-foreground/50">Higher quality uses more data and bandwidth</p>
@@ -148,7 +148,7 @@ export function SettingsClient() {
                     <section className="space-y-6 pt-8">
                         <h2 className="text-xs font-mono uppercase tracking-[0.3em] text-red-500/60 border-b border-red-500/10 pb-2">Danger Zone</h2>
                         <div className="p-6 border border-red-500/20 bg-red-500/[0.02]">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                 <div className="flex gap-4">
                                     <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
                                     <div>

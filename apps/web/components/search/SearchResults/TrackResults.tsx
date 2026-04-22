@@ -68,7 +68,7 @@ export function TrackResults({ tracks }: TrackResultsProps) {
 
   return (
     <div className="border-t border-foreground/10">
-      <div className="sticky top-[4.8rem] z-10 hidden lg:block">
+      <div className="sticky top-[65px] z-10 hidden lg:block">
         <TableHeader />
       </div>
       <div>

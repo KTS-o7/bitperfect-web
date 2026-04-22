@@ -133,7 +133,7 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="text-sm font-medium truncate">{getTrackTitle(track)}</div>
-                                                <div className="text-xs text-foreground/50 truncate md:hidden">{getTrackArtists(track)}</div>
+                                                <div className="text-xs text-foreground/50 truncate lg:hidden">{getTrackArtists(track)}</div>
                                             </div>
                                             <div className="hidden lg:block text-xs text-foreground/40 truncate italic min-w-0">
                                                 <span className="truncate block">{track.album?.title || "-"}</span>

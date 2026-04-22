@@ -154,7 +154,7 @@ function MobileTrackRow({
         onTouchCancel={handleTouchEnd}
         className={`
           relative flex items-center gap-3
-          px-0 py-3
+          px-4 py-3
           border-b border-foreground/10
           cursor-pointer
           transition-colors duration-150
