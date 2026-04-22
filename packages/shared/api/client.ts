@@ -616,7 +616,12 @@ export class LosslessAPI {
       const streamUrl = this.extractStreamUrlFromManifest(manifest);
 
       if (streamUrl) {
-        this.streamCache.set(cacheKey, streamUrl);
+        // If a stream proxy is configured, route through it to avoid CDN origin/referer blocks
+        const finalUrl = this.settings.streamProxy
+          ? `${this.settings.streamProxy}?url=${encodeURIComponent(streamUrl)}`
+          : streamUrl;
+        this.streamCache.set(cacheKey, finalUrl);
+        return finalUrl;
       }
 
       return streamUrl;

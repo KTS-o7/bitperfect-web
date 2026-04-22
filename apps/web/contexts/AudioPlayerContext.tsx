@@ -144,8 +144,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   // the audio element exists before we attempt to restore the stream URL.
   useEffect(() => {
     const audio = new Audio();
-    // Set crossOrigin to allow Web Audio API access for spectrum analyzer
-    audio.crossOrigin = "anonymous";
+    // NOTE: Do NOT set crossOrigin here. Some CDNs (Amazon) don't send CORS headers,
+    // and setting crossOrigin="anonymous" causes the browser to block those streams.
+    // The Web Audio API spectrum analyzer in StatsForNerds won't work for those tracks,
+    // but playback will. CORS-enabled CDNs (Tidal/lgf) still work without this flag.
     audioRef.current = audio;
 
     // Restore persisted track state (src + seek position) after creating the element

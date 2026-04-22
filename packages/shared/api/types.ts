@@ -121,6 +121,7 @@ export interface CacheStats {
 
 export interface APISettings {
   getInstances: () => Promise<string[]>;
+  streamProxy?: string; // optional base URL for proxying audio streams e.g. "/api/stream"
 }
 
 export interface WordSyllabus {
