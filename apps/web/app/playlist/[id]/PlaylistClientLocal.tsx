@@ -14,8 +14,7 @@ import { getCoverUrl } from "@/lib/api/utils";
 import { useToast } from "@/contexts/ToastContext";
 import { PlaylistQRCode } from "@/components/playlists/PlaylistQRCode";
 import { QRScanner } from "@/components/playlists/QRScanner";
-import { AudioPlayer } from "@/components/player/AudioPlayer";
-
+import AppLayout from "@/components/layout/AppLayout";
 interface PlaylistClientProps {
     playlistId: string;
 }
@@ -86,18 +85,21 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
 
     if (!playlist) {
         return (
-            <div className="min-h-screen">
-                <Header showBack />
-                <div className="max-w-6xl mx-auto px-6 py-8">
-                    <p className="text-foreground/50">Playlist not found</p>
+            <AppLayout>
+                <div className="min-h-screen">
+                    <Header showBack />
+                    <div className="max-w-6xl mx-auto px-6 py-8">
+                        <p className="text-foreground/50">Playlist not found</p>
+                    </div>
                 </div>
-            </div>
+            </AppLayout>
         );
     }
 
     const firstLetter = playlist.name.charAt(0).toUpperCase();
 
     return (
+        <AppLayout>
         <div className="relative min-h-screen w-full bg-background text-foreground transition-colors duration-300">
             <Header showBack />
 
@@ -231,9 +233,8 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
                 onClose={() => setShowScanner(false)}
                 onScan={handleScan}
             />
-
-            <AudioPlayer />
         </div>
+        </AppLayout>
     );
 }
 

@@ -48,18 +48,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <OfflineIndicator />
-      {/* Main Content */}
-      {/* Desktop: margin for sidebar + padding for audio player */}
-      {/* Mobile: padding for mini player */}
+      {/* Main Content
+          Mobile: pb accounts for MobileNav (64px) + optional MiniPlayer (64px)
+          Desktop (lg+): inline style is overridden to 0; lg:pb-24 handles audio player clearance */}
       <main
-        className="min-h-screen "
+        className="min-h-screen lg:pb-24"
         style={{
           paddingBottom: showMiniPlayer
-            ? "calc(64px + 64px + env(safe-area-inset-bottom))" // Mini player + Mobile Nav + safe area
-            : "calc(64px + env(safe-area-inset-bottom))", // Mobile Nav + safe area
+            ? "calc(64px + 64px + env(safe-area-inset-bottom))"
+            : "calc(64px + env(safe-area-inset-bottom))",
         }}
       >
-        <div className="lg:pb-24">{children}</div>
+        {children}
       </main>
 
       {/* Desktop Audio Player - hidden on mobile */}

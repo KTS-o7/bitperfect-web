@@ -22,9 +22,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    if (href === "/") {
-      return !pathname.startsWith("/library") && !pathname.startsWith("/settings") && !pathname.startsWith("/login");
-    }
+    if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
 

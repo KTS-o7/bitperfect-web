@@ -103,7 +103,7 @@ export function LibraryClient() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="text-sm font-medium truncate">{getTrackTitle(track)}</div>
-                                            <div className="text-xs text-foreground/50 truncate lg:hidden">{getTrackArtists(track)}</div>
+                                            <div className="text-xs text-foreground/50 truncate md:hidden">{getTrackArtists(track)}</div>
                                         </div>
                                         <div className="hidden lg:block w-48 text-xs text-foreground/40 truncate">
                                             {getTrackArtists(track)}

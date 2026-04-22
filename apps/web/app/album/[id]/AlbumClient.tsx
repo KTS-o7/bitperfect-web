@@ -163,7 +163,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
         {/* Track List - Brutalist Table */}
         <div className="border-t border-foreground/10">
           {/* Table Header */}
-          <div className="sticky top-[73px] z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/10">
+          <div className="sticky top-[65px] z-20 bg-background/95 backdrop-blur-xl border-b border-foreground/10">
             <div className="grid grid-cols-[40px_1fr_40px] lg:grid-cols-[50px_1fr_120px_80px_40px] gap-4 px-6 py-3">
               <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
                 #
@@ -171,7 +171,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
               <span className="text-[10px] font-mono uppercase tracking-widest text-foreground/40">
                 Title
               </span>
-              <span className="hidden md:block text-[10px] font-mono uppercase tracking-widest text-foreground/40 text-right">
+              <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest text-foreground/40 text-right">
                 Album
               </span>
               <span className="hidden lg:block text-[10px] font-mono uppercase tracking-widest text-foreground/40 text-right">
@@ -231,7 +231,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
                   </div>
 
                   {/* Album - Hidden on mobile */}
-                  <div className="hidden md:block min-w-0 text-right">
+                  <div className="hidden lg:block min-w-0 text-right">
                     <span className="text-[13px] text-foreground/30 italic truncate block">
                       {album.title}
                     </span>
