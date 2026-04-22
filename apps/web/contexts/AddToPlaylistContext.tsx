@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { Track } from "@bitperfect/shared/api";
 
 interface AddToPlaylistContextType {
@@ -12,7 +12,7 @@ interface AddToPlaylistContextType {
 
 const AddToPlaylistContext = createContext<AddToPlaylistContextType | undefined>(undefined);
 
-export function AddToPlaylistProvider({ children }: { children: React.ReactNode }) {
+export function AddToPlaylistProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [track, setTrack] = useState<Track | null>(null);
 

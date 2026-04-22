@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ArtistResponse, Track, Album } from "@bitperfect/shared/api";
 import {
@@ -13,20 +12,24 @@ import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/a
 import { Header } from "@/components/layout/Header";
 import AlbumCard from "@/components/search/AlbumCard";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import AppLayout from "@/components/layout/AppLayout";
 
 interface ArtistClientProps {
     artistData: ArtistResponse;
 }
 
 export function ArtistClient({ artistData }: ArtistClientProps) {
-    const router = useRouter();
     const { isPlaying } = usePlaybackState();
     const { currentTrack } = useQueue();
     const { setQueue, togglePlayPause } = useAudioPlayerActions();
     const { toggleLikeTrack, isLiked } = usePersistence();
 
+    const isArtistPlaying = currentTrack && artistData.tracks.some(t => t.id === currentTrack.id);
+
     const handlePlayTopTracks = () => {
-        if (artistData.tracks.length > 0) {
+        if (isArtistPlaying) {
+            togglePlayPause();
+        } else if (artistData.tracks.length > 0) {
             setQueue(artistData.tracks, 0);
         }
     };
@@ -44,6 +47,7 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
         : null;
 
     return (
+        <AppLayout>
         <div className="relative min-h-screen w-full bg-background text-foreground transition-colors duration-300">
             <Header showBack />
 
@@ -82,8 +86,17 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
                                 onClick={handlePlayTopTracks}
                                 className="px-6 py-3 border-2 border-foreground bg-foreground text-background hover:bg-transparent hover:text-foreground transition-all flex items-center gap-2 font-mono uppercase text-xs tracking-widest"
                             >
-                                <Play className="w-4 h-4 fill-current" />
-                                <span>Play Top Tracks</span>
+                                {isArtistPlaying && isPlaying ? (
+                                    <>
+                                        <Pause className="w-4 h-4 fill-current" />
+                                        <span>Pause</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play className="w-4 h-4 fill-current" />
+                                        <span>Play Top Tracks</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -178,5 +191,6 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
                 </div>
             </div>
         </div>
+        </AppLayout>
     );
 }

@@ -151,7 +151,11 @@ export const getTrackArtists = (
   const fallback = options.fallback || "Unknown Artist";
 
   if (track?.artists?.length) {
-    return track.artists.map((artist: Artist) => artist?.name).join(", ");
+    return track.artists.map((artist: Artist) => artist?.name).filter(Boolean).join(", ");
+  }
+
+  if (track?.artist?.name) {
+    return track.artist.name;
   }
 
   return fallback;

@@ -14,6 +14,67 @@ interface VirtualTrackListProps {
   width: number;
 }
 
+interface RowData {
+  tracks: Track[];
+  isPlaying: boolean;
+  currentTrack: Track | null;
+  loadingTrackId: number | null;
+  isMobile: boolean;
+  handleTrackClick: (track: Track, index: number) => void;
+}
+
+type RowComponentProps = {
+  index: number;
+  style: React.CSSProperties;
+  ariaAttributes: {
+    "aria-posinset": number;
+    "aria-setsize": number;
+    role: "listitem";
+  };
+} & RowData;
+
+// Defined outside the parent component so its reference is stable across renders.
+// This prevents react-window from remounting all rows on every parent re-render.
+function RowComponent({
+  index,
+  style,
+  tracks,
+  isPlaying,
+  currentTrack,
+  loadingTrackId,
+  isMobile,
+  handleTrackClick,
+}: RowComponentProps) {
+  const track = tracks[index];
+  const isCurrentTrack = currentTrack?.id === track.id;
+
+  return (
+    <div style={style}>
+      {isMobile ? (
+        <MobileTrackRow
+          track={track}
+          index={index}
+          isCurrentTrack={isCurrentTrack}
+          isPlaying={isCurrentTrack && isPlaying}
+          isLoading={loadingTrackId === track.id}
+          onClick={() => handleTrackClick(track, index)}
+          onAddToQueue={() => {}}
+          onShare={() => {}}
+        />
+      ) : (
+        <TrackRow
+          track={track}
+          index={index}
+          isCurrentTrack={isCurrentTrack}
+          isPlaying={isCurrentTrack && isPlaying}
+          isLoading={loadingTrackId === track.id}
+          onClick={() => handleTrackClick(track, index)}
+        />
+      )}
+    </div>
+  );
+}
+
 export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
@@ -36,56 +97,23 @@ export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProp
 
   const rowHeight = isMobile ? 64 : 56;
 
+  const rowProps: RowData = {
+    tracks,
+    isPlaying,
+    currentTrack,
+    loadingTrackId,
+    isMobile,
+    handleTrackClick,
+  };
+
   return (
     <List
       rowComponent={RowComponent}
       rowCount={tracks.length}
       rowHeight={rowHeight}
-      rowProps={{}}
+      rowProps={rowProps}
       overscanCount={5}
       style={{ height, width }}
     />
   );
-
-  function RowComponent({
-    index,
-    style,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-    ariaAttributes: {
-      "aria-posinset": number;
-      "aria-setsize": number;
-      role: "listitem";
-    };
-  }) {
-    const track = tracks[index];
-    const isCurrentTrack = currentTrack?.id === track.id;
-    
-    return (
-      <div style={style}>
-        {isMobile ? (
-          <MobileTrackRow
-            track={track}
-            index={index}
-            isCurrentTrack={isCurrentTrack}
-            isPlaying={isCurrentTrack && isPlaying}
-            isLoading={loadingTrackId === track.id}
-            onClick={() => handleTrackClick(track, index)}
-            onAddToQueue={() => {}}
-            onShare={() => {}}
-          />
-        ) : (
-          <TrackRow
-            track={track}
-            index={index}
-            isCurrentTrack={isCurrentTrack}
-            isPlaying={isCurrentTrack && isPlaying}
-            isLoading={loadingTrackId === track.id}
-            onClick={() => handleTrackClick(track, index)}
-          />
-        )}
-      </div>
-    );
-  }
 }

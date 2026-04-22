@@ -115,8 +115,24 @@ const getCoverUrlFn = (size: "large" | "thumb" = "large") => {
      if (e.target === e.currentTarget) onClose();
     }}
    >
-    <div className="min-h-full flex items-center justify-center py-[50vh]">
-     {lyrics?.parsed ? (
+     <div className="min-h-full flex items-center justify-center py-[50vh]">
+      {isLoading ? (
+       <div className="flex flex-col items-center justify-center text-foreground/50 space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-foreground/40" />
+        <p className="text-sm font-medium">Loading lyrics…</p>
+       </div>
+      ) : error ? (
+       <div className="flex flex-col items-center justify-center text-foreground/50 space-y-4">
+        <p className="text-xl font-medium">Could not load lyrics</p>
+        <p className="text-sm opacity-70">{error}</p>
+        <button
+         onClick={onClose}
+         className="px-6 py-2 rounded-full border border-foreground/20 hover:bg-foreground/10 transition-colors text-sm"
+        >
+         Go Back
+        </button>
+       </div>
+      ) : lyrics?.parsed ? (
       <div className="flex flex-col items-start w-full max-w-4xl px-8 md:px-12 space-y-10">
        {/* Minimal Cover Art & Metadata */}
        <div className="flex items-center gap-4 mb-4 opacity-80">

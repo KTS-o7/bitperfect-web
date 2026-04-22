@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useMemo, useState, useRef, useCallback } from "react";
+import React, { memo, useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Track } from "@/lib/api/types";
 import { getTrackTitle, formatTime } from "@/lib/api/utils";
@@ -40,6 +40,14 @@ function MobileTrackRow({
   const { downloadTrack, isDownloading, downloadingTrackId } = useDownload();
   const isThisDownloading = isDownloading && downloadingTrackId === track.id;
   const { open: openAddToPlaylist } = useAddToPlaylist();
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+  }, []);
 
   // Memoize cover URL computation
   const coverUrl = useMemo(() => {

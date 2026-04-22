@@ -29,9 +29,9 @@ function TrackRow({
 }: TrackRowProps) {
   // Memoize cover URL computation
   const coverUrl = useMemo(() => {
-    const coverId = track.album?.cover || track.album?.id;
+    const coverId = track.album?.cover;
     return coverId ? api.getCoverUrl(coverId, "80") : undefined;
-  }, [track.album?.cover, track.album?.id]);
+  }, [track.album?.cover]);
 
   // Memoize artist display computation
   const displayArtist = useMemo(() => {

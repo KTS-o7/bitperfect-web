@@ -248,6 +248,11 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
   const [expandedTab, setExpandedTab] = useState<Tab>(null); // Mobile only
 
+  // Reset to queue tab when current track has no lyrics
+  useEffect(() => {
+    if (!hasLyrics && activeTab === "lyrics") setActiveTab("queue");
+  }, [hasLyrics, activeTab]);
+
   // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -262,19 +267,19 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
 
   // Lock body scroll when open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
+    if (!isOpen || !currentTrack) {
       document.body.style.overflow = "";
+      return;
     }
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, currentTrack]);
 
   // Create sortable IDs
   const sortableIds = useMemo(
-    () => queue.map((track, index) => `${track.id}-${index}`),
+    () => queue.map(t => t.id.toString()),
     [queue],
   );
 
@@ -284,8 +289,8 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
-        const oldIndex = sortableIds.indexOf(active.id as string);
-        const newIndex = sortableIds.indexOf(over.id as string);
+        const oldIndex = queue.findIndex(t => t.id.toString() === active.id);
+        const newIndex = queue.findIndex(t => t.id.toString() === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
           const newQueue = arrayMove([...queue], oldIndex, newIndex);
@@ -303,7 +308,7 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
         }
       }
     },
-    [queue, sortableIds, currentQueueIndex, reorderQueue],
+    [queue, currentQueueIndex, reorderQueue],
   );
 
   const getCoverUrlFn = useCallback(() => {
@@ -592,8 +597,8 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                     >
                       {queue.map((track, index) => (
                         <DesktopSortableQueueItem
-                          key={sortableIds[index]}
-                          id={sortableIds[index]}
+                          key={track.id.toString()}
+                          id={track.id.toString()}
                           track={track}
                           index={index}
                           isCurrent={index === currentQueueIndex}
@@ -808,8 +813,8 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                       >
                         {queue.map((track, index) => (
                           <MobileSortableQueueItem
-                            key={sortableIds[index]}
-                            id={sortableIds[index]}
+                            key={track.id.toString()}
+                            id={track.id.toString()}
                             track={track}
                             index={index}
                             isCurrent={index === currentQueueIndex}

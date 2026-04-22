@@ -116,7 +116,7 @@ export function CreatePlaylistModal({ isOpen, onClose }: CreatePlaylistModalProp
                     </motion.div>
 
                     {/* Desktop Modal */}
-                    <div className="hidden md:flex fixed inset-0 z-50 items-center justify-center bg-black/80 overflow-y-auto">
+                    <div className="hidden md:flex fixed inset-0 z-[300] items-center justify-center bg-black/80 overflow-y-auto">
                         <div className="w-full max-w-md mx-4 my-8 bg-background border border-foreground/10 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-sm font-medium">Create Playlist</h2>

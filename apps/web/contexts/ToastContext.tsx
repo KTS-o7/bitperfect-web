@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { X, CheckCircle, AlertCircle, Info } from "lucide-react";
 
@@ -22,6 +22,7 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
+    const timerIds = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
     const removeToast = useCallback((id: string) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -31,10 +32,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         const id = crypto.randomUUID();
         setToasts((prev) => [...prev, { id, message, type }]);
 
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
             removeToast(id);
+            timerIds.current.delete(timerId);
         }, 5000);
+        timerIds.current.add(timerId);
     }, [removeToast]);
+
+    useEffect(() => {
+        return () => { timerIds.current.forEach(clearTimeout); };
+    }, []);
 
     const success = useCallback((message: string) => addToast(message, "success"), [addToast]);
     const error = useCallback((message: string) => addToast(message, "error"), [addToast]);

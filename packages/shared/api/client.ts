@@ -627,9 +627,7 @@ export class LosslessAPI {
   }
 
   getCoverUrl(id: string | number, size: string = "1280"): string {
-    if (!id) {
-      return `https://picsum.photos/seed/${Math.random()}/${size}`;
-    }
+    if (!id) return "";
 
     const formattedId = String(id).replace(/-/g, "/");
     return `https://resources.tidal.com/images/${formattedId}/${size}x${size}.jpg`;
@@ -684,7 +682,7 @@ export class LosslessAPI {
     }
   }
 
-  async fetchLyrics(track: Track): Promise<LyricsData | null> {
+  async fetchLyrics(track: Track, signal?: AbortSignal): Promise<LyricsData | null> {
     if (this.lyricsCache.has(track.id)) {
       return this.lyricsCache.get(track.id)!;
     }
@@ -702,7 +700,7 @@ export class LosslessAPI {
     const lyricsUrl = `/api/lyrics?title=${title}&artist=${artist}&album=${album}&duration=${duration}&source=${source}`;
 
     try {
-      const response = await fetch(lyricsUrl);
+      const response = await fetch(lyricsUrl, signal ? { signal } : undefined);
 
       if (!response.ok) {
         console.warn(`Lyrics API returned ${response.status}`);

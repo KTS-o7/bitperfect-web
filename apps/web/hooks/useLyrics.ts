@@ -41,7 +41,7 @@ export function useLyrics(
       setCurrentLineIndex(initialState.currentLineIndex);
 
       try {
-        const data = await api.fetchLyrics(currentTrack);
+        const data = await api.fetchLyrics(currentTrack, controller.signal);
         if (!controller.signal.aborted) {
           // Batch success state updates
           setLyrics(data);

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Album, Track } from "@/lib/api/types";
 import {
@@ -12,6 +11,7 @@ import { Play, Pause, Music2, Heart } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
 import { Header } from "@/components/layout/Header";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import AppLayout from "@/components/layout/AppLayout";
 
 interface AlbumClientProps {
   album: Album;
@@ -19,8 +19,6 @@ interface AlbumClientProps {
 }
 
 export function AlbumClient({ album, tracks }: AlbumClientProps) {
-  const router = useRouter();
-
   // Use split contexts for state
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
@@ -30,8 +28,13 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
 
   const { toggleLikeTrack, isLiked } = usePersistence();
 
+  const isAlbumPlaying =
+    currentTrack && tracks.some((t) => t.id === currentTrack.id);
+
   const handlePlayAlbum = () => {
-    if (tracks.length > 0) {
+    if (isAlbumPlaying && isPlaying) {
+      togglePlayPause();
+    } else {
       setQueue(tracks, 0);
     }
   };
@@ -63,10 +66,8 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
     ? new Date(album.releaseDate).getFullYear()
     : null;
 
-  const isAlbumPlaying =
-    currentTrack && tracks.some((t) => t.id === currentTrack.id);
-
   return (
+    <AppLayout>
     <div className="relative min-h-screen w-full bg-background text-foreground transition-colors duration-300">
       <Header showBack />
 
@@ -276,5 +277,6 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
 
       {/* Fixed Audio Player is rendered globally by AppLayout */}
     </div>
+    </AppLayout>
   );
 }

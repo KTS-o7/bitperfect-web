@@ -76,6 +76,10 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
         }
     }, [deletePlaylist, playlistId]);
 
+    const handleScan = useCallback((data: string) => {
+        window.location.href = `/playlist/shared#${data}`;
+    }, []);
+
     const handlePlayTrack = useCallback((track: Track, index: number) => {
         setQueue(tracks, index);
     }, [tracks, setQueue]);
@@ -225,9 +229,7 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
             <QRScanner
                 isOpen={showScanner}
                 onClose={() => setShowScanner(false)}
-                onScan={(data) => {
-                    window.location.href = `/playlist/shared#${data}`;
-                }}
+                onScan={handleScan}
             />
 
             <AudioPlayer />

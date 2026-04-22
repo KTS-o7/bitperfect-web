@@ -24,19 +24,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = useRef(createClient()).current;
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    let initialLoad = true;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      setIsLoading(false);
-    };
-
-    checkSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
+      if (initialLoad) {
+        setIsLoading(false);
+        initialLoad = false;
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [supabase]);

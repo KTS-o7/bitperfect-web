@@ -38,16 +38,18 @@ export function LyricsPanel({
   }
  }, [currentLineIndex]);
 
- const downloadLrc = () => {
-  if (!lyrics?.subtitles || !track) return;
-  const element = document.createElement("a");
-  const file = new Blob([lyrics.subtitles], { type: "text/plain" });
-  element.href = URL.createObjectURL(file);
-  element.download = `${track.title}.lrc`;
-  document.body.appendChild(element);
-  element.click();
-  document.body.removeChild(element);
- };
+  const downloadLrc = () => {
+   if (!lyrics?.subtitles || !track) return;
+   const element = document.createElement("a");
+   const file = new Blob([lyrics.subtitles], { type: "text/plain" });
+   const url = URL.createObjectURL(file);
+   element.href = url;
+   element.download = `${track.title}.lrc`;
+   document.body.appendChild(element);
+   element.click();
+   document.body.removeChild(element);
+   URL.revokeObjectURL(url);
+  };
 
  return (
   <div id="lyrics-panel" className={cn("lyrics-panel", className)}>

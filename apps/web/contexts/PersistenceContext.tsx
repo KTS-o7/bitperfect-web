@@ -178,29 +178,29 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }, [success]);
 
     const addTrackToPlaylist = useCallback((playlistId: string, track: Track) => {
+        const playlist = latestDataRef.current.playlists.find((p) => p.id === playlistId);
+        if (!playlist) return;
+
+        if (playlist.trackIds.includes(track.id)) {
+            toast("Track already in playlist", "info");
+            return;
+        }
+
+        // Extract minimal track data for storage
+        const playlistTrack = {
+            id: track.id,
+            title: track.title,
+            duration: track.duration,
+            artist: track.artist,
+            artists: track.artists,
+            album: track.album,
+        };
+
+        // Only save cover if it's a valid string
+        const newCoverArt = track.album?.cover;
+        const isValidCover = typeof newCoverArt === 'string' && newCoverArt.length > 0;
+
         setData((prev) => {
-            const playlist = prev.playlists.find((p) => p.id === playlistId);
-            if (!playlist) return prev;
-
-            if (playlist.trackIds.includes(track.id)) {
-                toast("Track already in playlist", "info");
-                return prev;
-            }
-
-            // Extract minimal track data for storage
-            const playlistTrack = {
-                id: track.id,
-                title: track.title,
-                duration: track.duration,
-                artist: track.artist,
-                artists: track.artists,
-                album: track.album,
-            };
-
-            // Only save cover if it's a valid string
-            const newCoverArt = track.album?.cover;
-            const isValidCover = typeof newCoverArt === 'string' && newCoverArt.length > 0;
-
             const updatedPlaylists = prev.playlists.map((p) =>
                 p.id === playlistId
                     ? {
@@ -238,11 +238,12 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     const reorderPlaylistTracks = useCallback((playlistId: string, trackIds: number[]) => {
         setData((prev) => ({
             ...prev,
-            playlists: prev.playlists.map((p) =>
-                p.id === playlistId
-                    ? { ...p, trackIds, updatedAt: new Date().toISOString() }
-                    : p
-            ),
+            playlists: prev.playlists.map((p) => {
+                if (p.id !== playlistId) return p;
+                const trackMap = new Map((p.tracks || []).map(t => [t.id, t]));
+                const reorderedTracks = trackIds.map(id => trackMap.get(id)).filter((t): t is NonNullable<typeof t> => t !== undefined);
+                return { ...p, trackIds, tracks: reorderedTracks, updatedAt: new Date().toISOString() };
+            }),
         }));
     }, []);
 

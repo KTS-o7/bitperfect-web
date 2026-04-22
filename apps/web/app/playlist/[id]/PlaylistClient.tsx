@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { PlaylistResponse, Track } from "@bitperfect/shared/api";
 import {
@@ -12,13 +11,13 @@ import { Play, Pause, ListMusic, Heart } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
 import { Header } from "@/components/layout/Header";
 import { usePersistence } from "@/contexts/PersistenceContext";
+import AppLayout from "@/components/layout/AppLayout";
 
 interface PlaylistClientProps {
     playlistData: PlaylistResponse;
 }
 
 export function PlaylistClient({ playlistData }: PlaylistClientProps) {
-    const router = useRouter();
     const { isPlaying } = usePlaybackState();
     const { currentTrack } = useQueue();
     const { setQueue, togglePlayPause } = useAudioPlayerActions();
@@ -26,8 +25,12 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
 
     const { playlist, tracks } = playlistData;
 
+    const isPlaylistPlaying = currentTrack && tracks.some(t => t.id === currentTrack.id);
+
     const handlePlayPlaylist = () => {
-        if (tracks.length > 0) {
+        if (isPlaylistPlaying && isPlaying) {
+            togglePlayPause();
+        } else if (tracks.length > 0) {
             setQueue(tracks, 0);
         }
     };
@@ -41,6 +44,7 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
     };
 
     return (
+        <AppLayout>
         <div className="relative min-h-screen w-full bg-background text-foreground transition-colors duration-300">
             <Header showBack />
 
@@ -71,8 +75,17 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
                                 onClick={handlePlayPlaylist}
                                 className="px-6 py-3 border-2 border-foreground bg-foreground text-background hover:bg-transparent hover:text-foreground transition-all flex items-center gap-2 font-mono uppercase text-xs tracking-widest"
                             >
-                                <Play className="w-4 h-4 fill-current" />
-                                <span>Play Playlist</span>
+                                {isPlaylistPlaying && isPlaying ? (
+                                    <>
+                                        <Pause className="w-4 h-4 fill-current" />
+                                        <span>Pause</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Play className="w-4 h-4 fill-current" />
+                                        <span>Play Playlist</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -135,5 +148,6 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
                 </section>
             </div>
         </div>
+        </AppLayout>
     );
 }

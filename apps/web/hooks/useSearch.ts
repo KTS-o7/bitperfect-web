@@ -130,14 +130,26 @@ export function useSearch() {
         queryKey,
         queryFn: async ({ pageParam = 0 }) => {
           if (tab === "tracks") {
-            return api.searchTracks(query, { offset: pageParam, limit: 25 });
+            const result = await api.searchTracks(query, { offset: pageParam, limit: 25 });
+            return { ...result, offset: pageParam as number };
           } else if (tab === "albums") {
-            return api.searchAlbums(query, { offset: pageParam, limit: 25 });
+            const result = await api.searchAlbums(query, { offset: pageParam, limit: 25 });
+            return { ...result, offset: pageParam as number };
           } else {
-            return api.searchArtists(query, { offset: pageParam, limit: 25 });
+            const result = await api.searchArtists(query, { offset: pageParam, limit: 25 });
+            return { ...result, offset: pageParam as number };
           }
         },
         initialPageParam: 0,
+        pages: 1,
+        getNextPageParam: (lastPage: { offset?: number; limit?: number; totalNumberOfItems?: number }) => {
+          const currentOffset = lastPage.offset ?? 0;
+          const currentLimit = lastPage.limit ?? 25;
+          const totalItems = lastPage.totalNumberOfItems ?? 0;
+          const nextOffset = currentOffset + currentLimit;
+          if (nextOffset >= totalItems) return undefined;
+          return nextOffset;
+        },
       });
     },
     [query, queryClient],

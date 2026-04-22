@@ -26,7 +26,7 @@ export interface Playlist {
     name: string;
     description?: string;
     trackIds: number[];  // Kept for backward compatibility
-    tracks: PlaylistTrack[];  // Full track data
+    tracks?: PlaylistTrack[];  // Full track data
     createdAt: string;
     updatedAt: string;
     coverArt?: string;

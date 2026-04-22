@@ -141,7 +141,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
     useAudioPlayerActions();
 
   const sortableIds = useMemo(
-    () => queue.map((track, index) => `${track.id}-${index}`),
+    () => queue.map(t => t.id.toString()),
     [queue],
   );
 
@@ -161,8 +161,8 @@ export function Queue({ isOpen, onClose }: QueueProps) {
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
-        const oldIndex = sortableIds.indexOf(active.id as string);
-        const newIndex = sortableIds.indexOf(over.id as string);
+        const oldIndex = queue.findIndex(t => t.id.toString() === active.id);
+        const newIndex = queue.findIndex(t => t.id.toString() === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
           const newQueue = arrayMove([...queue], oldIndex, newIndex);
@@ -186,7 +186,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
         }
       }
     },
-    [queue, sortableIds, currentQueueIndex, reorderQueue],
+    [queue, currentQueueIndex, reorderQueue],
   );
 
   // Lock body scroll when open
@@ -299,8 +299,8 @@ export function Queue({ isOpen, onClose }: QueueProps) {
                   >
                     {queue.map((track, index) => (
                       <SortableQueueItem
-                        key={sortableIds[index]}
-                        id={sortableIds[index]}
+                        key={track.id.toString()}
+                        id={track.id.toString()}
                         track={track}
                         index={index}
                         isCurrent={index === currentQueueIndex}

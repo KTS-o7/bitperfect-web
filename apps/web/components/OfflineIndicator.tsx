@@ -9,6 +9,11 @@ export function OfflineIndicator() {
     const [showReconnected, setShowReconnected] = useState(false);
 
     useEffect(() => {
+        // Check current state immediately (guard for SSR)
+        if (typeof navigator !== "undefined") {
+            setIsOffline(!navigator.onLine);
+        }
+
         const handleOnline = () => {
             setIsOffline(false);
             setShowReconnected(true);

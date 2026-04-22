@@ -23,8 +23,8 @@ export function getMediaSessionArtwork(coverId: string | number | undefined): Me
 export function updateMediaSessionMetadata(track: Track): void {
   if (!("mediaSession" in navigator)) return;
 
-  const coverId = track.album?.cover || track.album?.id;
-  const artwork = getMediaSessionArtwork(coverId);
+  const coverId = track.album?.cover;
+  const artwork = coverId ? getMediaSessionArtwork(coverId) : [];
   const artistName =
     track.artist?.name ||
     track.artists?.find((a) => a.type === "MAIN")?.name ||
