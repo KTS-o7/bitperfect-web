@@ -280,8 +280,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     if (!audioRef.current) return;
     const s = stateRef.current;
 
-    // If no source is set, try to load the current track
-    if (!audioRef.current.src && s.currentTrack) {
+    // If no real source is loaded yet, fetch it now
+    if (!s.streamUrl && s.currentTrack) {
       try {
         const streamUrl = await api.getStreamUrl(s.currentTrack.id, s.currentQuality);
         if (streamUrl && audioRef.current) {
@@ -297,10 +297,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    if (!audioRef.current.src) {
-      console.error("No audio source set and no current track to load");
-      return;
-    }
+    if (!audioRef.current.src || !s.streamUrl) return;
 
     await safePlay(audioRef.current);
   }, [safePlay]);
