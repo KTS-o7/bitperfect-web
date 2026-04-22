@@ -10,7 +10,6 @@ import {
 } from "@/contexts/AudioPlayerContext";
 import { Play, Pause, Music2, Heart } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
-import { AudioPlayer } from "@/components/player/AudioPlayer";
 import { Header } from "@/components/layout/Header";
 import { usePersistence } from "@/contexts/PersistenceContext";
 
@@ -275,8 +274,7 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
         </div>
       </div>
 
-      {/* Fixed Audio Player */}
-      <AudioPlayer />
+      {/* Fixed Audio Player is rendered globally by AppLayout */}
     </div>
   );
 }

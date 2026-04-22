@@ -10,7 +10,6 @@ import {
 } from "@/contexts/AudioPlayerContext";
 import { Play, Pause, Users, Heart } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime, getCoverUrl } from "@/lib/api/utils";
-import { AudioPlayer } from "@/components/player/AudioPlayer";
 import { Header } from "@/components/layout/Header";
 import AlbumCard from "@/components/search/AlbumCard";
 import { usePersistence } from "@/contexts/PersistenceContext";
@@ -178,8 +177,6 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
 
                 </div>
             </div>
-
-            <AudioPlayer />
         </div>
     );
 }

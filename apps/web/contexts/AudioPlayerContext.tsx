@@ -31,26 +31,6 @@ const AudioPlayerStateContext = createContext<AudioPlayerContextValue | null>(nu
 // Actions context — stable after mount, never triggers re-renders on its own
 const AudioPlayerActionsContext = createContext<AudioPlayerContextValue | null>(null);
 
-// Generate multiple artwork sizes for Media Session API
-function getMediaSessionArtwork(coverId: string | number | undefined): MediaImage[] {
-  if (!coverId) return [];
-
-  const coverIdStr = String(coverId);
-  const sizes = [
-    { size: "96", dimensions: "96x96" },
-    { size: "160", dimensions: "160x160" },
-    { size: "320", dimensions: "320x320" },
-    { size: "640", dimensions: "640x640" },
-    { size: "1280", dimensions: "1280x1280" },
-  ];
-
-  return sizes.map(({ size, dimensions }) => ({
-    src: api.getCoverUrl(coverIdStr, size),
-    sizes: dimensions,
-    type: "image/jpeg",
-  }));
-}
-
 // Export function AudioPlayerProvider for backward compatibility
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const { addToHistory } = usePersistence();
@@ -180,15 +160,23 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
             state.currentQuality
           );
           if (streamUrl && !cancelled && audioRef.current) {
-            audioRef.current.src = streamUrl;
-            audioRef.current.currentTime = state.currentTime;
-            audioRef.current.volume = state.volume;
-            audioRef.current.muted = state.isMuted;
+            const audio = audioRef.current;
+            const savedTime = state.currentTime;
+
+            // Must wait for metadata before seeking — seeking on HAVE_NOTHING is silently dropped
+            const seekOnce = () => {
+              if (savedTime > 0) audio.currentTime = savedTime;
+              audio.removeEventListener("loadedmetadata", seekOnce);
+            };
+            audio.addEventListener("loadedmetadata", seekOnce);
+
+            audio.src = streamUrl;
+            audio.volume = state.volume;
+            audio.muted = state.isMuted;
 
             setState((prev) => ({
               ...prev,
               streamUrl: streamUrl,
-              duration: audioRef.current?.duration || 0,
             }));
           }
         } catch (error) {
@@ -290,14 +278,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const play = useCallback(async () => {
     if (!audioRef.current) return;
+    const s = stateRef.current;
 
     // If no source is set, try to load the current track
-    if (!audioRef.current.src && state.currentTrack) {
+    if (!audioRef.current.src && s.currentTrack) {
       try {
-        const streamUrl = await api.getStreamUrl(
-          state.currentTrack.id,
-          state.currentQuality
-        );
+        const streamUrl = await api.getStreamUrl(s.currentTrack.id, s.currentQuality);
         if (streamUrl && audioRef.current) {
           audioRef.current.src = streamUrl;
           setState((prev) => ({ ...prev, streamUrl }));
@@ -317,7 +303,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     await safePlay(audioRef.current);
-  }, [state.currentTrack, state.currentQuality, safePlay]);
+  }, [safePlay]);
 
   const pause = useCallback(() => {
     if (!audioRef.current) return;
@@ -325,12 +311,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const togglePlayPause = useCallback(async () => {
-    if (state.isPlaying) {
+    if (stateRef.current.isPlaying) {
       pause();
     } else {
       await play();
     }
-  }, [state.isPlaying, play, pause]);
+  }, [play, pause]);
 
   const seek = useCallback((time: number) => {
     if (!audioRef.current) return;
@@ -347,9 +333,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const toggleMute = useCallback(() => {
     if (!audioRef.current) return;
-    audioRef.current.muted = !state.isMuted;
-    setState((prev) => ({ ...prev, isMuted: !prev.isMuted }));
-  }, [state.isMuted]);
+    const newMuted = !stateRef.current.isMuted;
+    audioRef.current.muted = newMuted;
+    setState((prev) => ({ ...prev, isMuted: newMuted }));
+  }, []);
 
   // Queue management functions
   const addToQueue = useCallback((track: Track) => {
@@ -378,10 +365,25 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       const track = tracks[startIndex];
 
       // Set the queue and currentTrack immediately so the player UI appears right away
+      // If shuffle is active, shuffle the new queue and find the starting track in it
+      let effectiveStartIndex = startIndex;
+      if (stateRef.current.shuffleActive) {
+        originalQueueBeforeShuffle.current = [...tracks];
+        const newShuffled = [...tracks].sort(() => Math.random() - 0.5);
+        // Put the selected track first so it plays immediately
+        const selectedTrackIdx = newShuffled.findIndex((t) => t.id === track.id);
+        if (selectedTrackIdx > 0) {
+          newShuffled.splice(selectedTrackIdx, 1);
+          newShuffled.unshift(track);
+        }
+        shuffledQueue.current = newShuffled;
+        effectiveStartIndex = 0;
+      }
+
       setState((prev) => ({
         ...prev,
         queue: tracks,
-        currentQueueIndex: startIndex,
+        currentQueueIndex: effectiveStartIndex,
         currentTrack: track,
         currentTime: 0,
         streamUrl: null,
@@ -568,7 +570,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
           currentQueueIndex: newIndex !== -1 ? newIndex : 0,
         };
       } else {
-        const currentTrack = prev.queue[prev.currentQueueIndex];
+        // When shuffle is ON, currentQueueIndex points into shuffledQueue, not prev.queue
+        const currentTrack = shuffledQueue.current[prev.currentQueueIndex] ?? prev.queue[prev.currentQueueIndex];
         const originalQueue = originalQueueBeforeShuffle.current;
         const newIndex = originalQueue.findIndex(
           (t) => t.id === currentTrack?.id

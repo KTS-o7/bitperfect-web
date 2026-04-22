@@ -247,7 +247,6 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
 
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics">("queue");
   const [expandedTab, setExpandedTab] = useState<Tab>(null); // Mobile only
-  const [autoPlay, setAutoPlay] = useState(true);
 
   // DnD sensors
   const sensors = useSensors(

@@ -10,7 +10,6 @@ import {
 } from "@/contexts/AudioPlayerContext";
 import { Play, Pause, ListMusic, Heart } from "lucide-react";
 import { getTrackTitle, getTrackArtists, formatTime } from "@/lib/api/utils";
-import { AudioPlayer } from "@/components/player/AudioPlayer";
 import { Header } from "@/components/layout/Header";
 import { usePersistence } from "@/contexts/PersistenceContext";
 
@@ -135,8 +134,6 @@ export function PlaylistClient({ playlistData }: PlaylistClientProps) {
                     </div>
                 </section>
             </div>
-
-            <AudioPlayer />
         </div>
     );
 }

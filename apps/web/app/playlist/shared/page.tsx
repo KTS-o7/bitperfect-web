@@ -8,7 +8,6 @@ import { useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { usePersistence } from "@/contexts/PersistenceContext";
 import { Track } from "@bitperfect/shared/api";
 import Link from "next/link";
-import { AudioPlayer } from "@/components/player/AudioPlayer";
 
 export default function SharedPlaylistPage() {
     const [playlist, setPlaylist] = useState<SharedPlaylist | null>(null);
@@ -180,13 +179,11 @@ export default function SharedPlaylistPage() {
                             <div className="hidden lg:block text-right font-mono text-xs text-white/40 tabular-nums">
                                 {formatTime(track.duration)}
                             </div>
-                        </div>
-                    ))}
-                </div>
+                    </div>
+                ))}
             </div>
-
-            <AudioPlayer />
         </div>
+    </div>
     );
 }
 
