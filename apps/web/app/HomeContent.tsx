@@ -46,7 +46,7 @@ export function HomeContent() {
       </div>
 
       {/* Desktop only — hidden below lg */}
-      <div className="hidden lg:flex">
+      <div className="hidden lg:block">
         <Header>
           <SearchBar
             onSearch={handleSearchWithTracking}
