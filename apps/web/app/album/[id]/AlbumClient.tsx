@@ -202,12 +202,20 @@ export function AlbumClient({ album, tracks }: AlbumClientProps) {
                 >
                   {/* Track Number */}
                   <div className="text-center">
-                    <span
-                      className={`text-sm font-mono ${isCurrent ? "text-foreground" : "text-foreground/40"
-                        }`}
-                    >
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
+                    {isCurrent && isPlaying ? (
+                      <div className="flex items-end justify-center gap-[3px] h-5">
+                        <div className="w-1 bg-foreground rounded-full animate-[wave1_0.6s_ease-in-out_infinite]" style={{ height: "40%" }} />
+                        <div className="w-1 bg-foreground rounded-full animate-[wave2_0.6s_ease-in-out_infinite]" style={{ height: "100%", animationDelay: "0.1s" }} />
+                        <div className="w-1 bg-foreground rounded-full animate-[wave3_0.6s_ease-in-out_infinite]" style={{ height: "60%", animationDelay: "0.2s" }} />
+                      </div>
+                    ) : (
+                      <span
+                        className={`text-sm font-mono ${isCurrent ? "text-foreground" : "text-foreground/40"
+                          }`}
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                    )}
                   </div>
 
                   {/* Title & Artist */}

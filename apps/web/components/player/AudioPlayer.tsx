@@ -123,7 +123,7 @@ export function AudioPlayer() {
   const formattedDuration = useMemo(() => formatTime(duration), [duration]);
 
   const getCoverUrlFn = useCallback(() => {
-    const coverId = currentTrack?.album?.cover || currentTrack?.album?.id;
+    const coverId = currentTrack?.album?.cover;
     if (!coverId) return null;
     return getCoverUrl(coverId, "160");
   }, [currentTrack]);

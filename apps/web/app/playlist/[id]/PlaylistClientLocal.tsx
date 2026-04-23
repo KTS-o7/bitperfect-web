@@ -6,7 +6,7 @@ import { usePersistence } from "@/contexts/PersistenceContext";
 import { Header } from "@/components/layout/Header";
 import { Track } from "@bitperfect/shared/api";
 import { ListMusic, Play, Share2, Trash2, MoreVertical, Heart, Camera } from "lucide-react";
-import { useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerActions, useQueue, usePlaybackState } from "@/contexts/AudioPlayerContext";
 import { formatTime, getTrackTitle, getTrackArtists } from "@/lib/api/utils";
 import { generateShareUrl } from "@/lib/shareLinks";
 import { getPlaylistColor, PlaylistTrack } from "@/lib/storage";
@@ -34,6 +34,8 @@ function convertToTrack(playlistTrack: PlaylistTrack): Track {
 export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const { getPlaylist, deletePlaylist, removeTrackFromPlaylist, toggleLikeTrack, isLiked } = usePersistence();
     const { setQueue } = useAudioPlayerActions();
+    const { currentTrack } = useQueue();
+    const { isPlaying } = usePlaybackState();
     const { success } = useToast();
     const [playlist, setPlaylist] = useState(() => getPlaylist(playlistId));
     const [showMenu, setShowMenu] = useState(false);
@@ -211,6 +213,8 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
                                 key={track.id}
                                 track={track}
                                 index={index}
+                                isCurrent={currentTrack?.id === track.id}
+                                isPlaying={isPlaying}
                                 onRemove={() => removeTrackFromPlaylist(playlistId, track.id)}
                                 onPlay={() => handlePlayTrack(track, index)}
                                 isLiked={isLiked(track.id)}
@@ -241,6 +245,8 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
 function PlaylistTrackRow({
     track,
     index,
+    isCurrent,
+    isPlaying,
     onRemove,
     onPlay,
     isLiked,
@@ -248,6 +254,8 @@ function PlaylistTrackRow({
 }: {
     track: Track;
     index: number;
+    isCurrent: boolean;
+    isPlaying: boolean;
     onRemove: () => void;
     onPlay: () => void;
     isLiked: boolean;
@@ -255,15 +263,24 @@ function PlaylistTrackRow({
 }) {
     return (
         <div
-            className="flex gap-4 items-center px-6 py-3 border-b border-foreground/10 
-                        last:border-0 cursor-pointer hover:bg-foreground/[0.02]"
+            className={`flex gap-4 items-center px-6 py-3 border-b border-foreground/10 
+                        last:border-0 cursor-pointer hover:bg-foreground/[0.02]
+                        ${isCurrent ? "border-l-[3px] border-l-foreground pl-[21px] bg-foreground/[0.02]" : "border-l-[3px] border-l-transparent"}`}
             onClick={onPlay}
         >
             <div className="w-8 text-center font-mono text-xs text-foreground/40">
-                {String(index + 1).padStart(2, "0")}
+                {isCurrent && isPlaying ? (
+                    <div className="flex items-end justify-center gap-[3px] h-4">
+                        <div className="w-1 bg-foreground rounded-full animate-[wave1_0.6s_ease-in-out_infinite]" style={{ height: "40%" }} />
+                        <div className="w-1 bg-foreground rounded-full animate-[wave2_0.6s_ease-in-out_infinite]" style={{ height: "100%", animationDelay: "0.1s" }} />
+                        <div className="w-1 bg-foreground rounded-full animate-[wave3_0.6s_ease-in-out_infinite]" style={{ height: "60%", animationDelay: "0.2s" }} />
+                    </div>
+                ) : (
+                    <span className={isCurrent ? "text-foreground" : ""}>{String(index + 1).padStart(2, "0")}</span>
+                )}
             </div>
             <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{getTrackTitle(track)}</div>
+                <div className={`text-sm font-medium truncate ${isCurrent ? "text-foreground" : "text-foreground/90"}`}>{getTrackTitle(track)}</div>
             </div>
             <div className="hidden lg:block w-48 text-xs text-foreground/40 truncate">
                 {getTrackArtists(track)}

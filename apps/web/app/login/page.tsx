@@ -34,7 +34,7 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <div className="flex min-h-[calc(100vh-73px)] items-center justify-center px-4">
+      <div className="flex min-h-[calc(100vh-65px)] items-center justify-center px-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-mono uppercase tracking-widest text-foreground">
