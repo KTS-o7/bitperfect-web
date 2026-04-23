@@ -150,7 +150,7 @@ export function AudioPlayer() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setIsStatsOpen]);
 
   useEffect(() => {
     if (progressFillRef.current) {

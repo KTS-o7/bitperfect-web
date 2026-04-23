@@ -18,7 +18,6 @@ export interface AudioPlayerState {
 }
 
 export interface AudioPlayerContextValue extends AudioPlayerState {
-  playTrack: (track: Track, streamUrl: string) => void;
   addToQueue: (track: Track) => void;
   setQueue: (tracks: Track[], startIndex?: number) => void;
   reorderQueue: (newQueue: Track[], newCurrentIndex: number) => void;

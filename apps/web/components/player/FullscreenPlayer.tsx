@@ -50,6 +50,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { lockScroll, unlockScroll } from "@/lib/utils";
 
 interface FullscreenPlayerProps {
   isOpen: boolean;
@@ -62,13 +63,11 @@ type Tab = "queue" | "lyrics" | null;
 function DesktopSortableQueueItem({
   id,
   track,
-  index,
   isCurrent,
   onPlay,
 }: {
   id: string;
   track: Track;
-  index: number;
   isCurrent: boolean;
   onPlay: () => void;
 }) {
@@ -145,15 +144,15 @@ function DesktopSortableQueueItem({
 function MobileSortableQueueItem({
   id,
   track,
-  index,
   isCurrent,
   onPlay,
+  onRemove,
 }: {
   id: string;
   track: Track;
-  index: number;
   isCurrent: boolean;
   onPlay: () => void;
+  onRemove: () => void;
 }) {
   const {
     attributes,
@@ -217,7 +216,7 @@ function MobileSortableQueueItem({
         {formatTime(track.duration || 0)}
       </div>
 
-      <button className="w-8 h-8 flex items-center justify-center text-foreground/50">
+      <button className="w-8 h-8 flex items-center justify-center text-foreground/50" onClick={onRemove}>
         <MoreVertical className="w-4 h-4" />
       </button>
     </div>
@@ -232,6 +231,7 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
     seek,
     setQueue,
     reorderQueue,
+    removeFromQueue,
     toggleShuffle,
     toggleRepeat,
     setIsStatsOpen,
@@ -268,12 +268,12 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
   // Lock body scroll when open
   useEffect(() => {
     if (!isOpen || !currentTrack) {
-      document.body.style.overflow = "";
+      unlockScroll();
       return;
     }
-    document.body.style.overflow = "hidden";
+    lockScroll();
     return () => {
-      document.body.style.overflow = "";
+      unlockScroll();
     };
   }, [isOpen, currentTrack]);
 
@@ -600,7 +600,6 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                           key={track.id.toString()}
                           id={track.id.toString()}
                           track={track}
-                          index={index}
                           isCurrent={index === currentQueueIndex}
                           onPlay={() => handleTrackPlay(track, index)}
                         />
@@ -816,9 +815,9 @@ export function FullscreenPlayer({ isOpen, onClose }: FullscreenPlayerProps) {
                             key={track.id.toString()}
                             id={track.id.toString()}
                             track={track}
-                            index={index}
                             isCurrent={index === currentQueueIndex}
                             onPlay={() => handleTrackPlay(track, index)}
+                            onRemove={() => removeFromQueue(index)}
                           />
                         ))}
                       </SortableContext>

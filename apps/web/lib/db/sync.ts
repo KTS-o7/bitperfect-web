@@ -125,10 +125,6 @@ export async function syncFromCloud(): Promise<SyncResult> {
   }
 }
 
-function uuidv4(): string {
-  return crypto.randomUUID();
-}
-
 function isValidUUID(id: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(id);
@@ -146,7 +142,7 @@ export async function syncToCloud(): Promise<SyncResult> {
     const localData = storage.load();
 
     const playlistRows = localData.playlists.map((p: Playlist) => ({
-      id: isValidUUID(p.id) ? p.id : uuidv4(),
+      id: isValidUUID(p.id) ? p.id : crypto.randomUUID(),
       user_id: user.id,
       name: p.name,
       description: p.description || null,

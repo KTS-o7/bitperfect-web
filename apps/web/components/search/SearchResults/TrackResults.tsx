@@ -8,6 +8,7 @@ import { TableHeader } from "../TableHeader";
 import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { useState, useCallback, useRef } from "react";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { getTrackTitle, getTrackArtists } from "@/lib/api/utils";
 
 interface TrackResultsProps {
   tracks: Track[];
@@ -16,14 +17,16 @@ interface TrackResultsProps {
 export function TrackResults({ tracks }: TrackResultsProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayerActions();
+  const { setQueue, addToQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
+  const loadingTrackIdRef = useRef(loadingTrackId);
+  loadingTrackIdRef.current = loadingTrackId;
   const { width, height } = useWindowSize();
 
   const isMobile = width > 0 && width < 1024;
 
   const handleTrackClick = useCallback(async (track: Track, index: number) => {
-    if (loadingTrackId === track.id) return;
+    if (loadingTrackIdRef.current === track.id) return;
     setLoadingTrackId(track.id);
     try {
       await setQueue(tracks, index);
@@ -32,7 +35,16 @@ export function TrackResults({ tracks }: TrackResultsProps) {
     } finally {
       setLoadingTrackId(null);
     }
-  }, [tracks, setQueue, loadingTrackId]);
+  }, [tracks, setQueue]);
+
+  const handleShare = useCallback((track: Track) => {
+    const text = `${getTrackTitle(track)} — ${getTrackArtists(track)}`;
+    if (navigator.share) {
+      navigator.share({ title: text });
+    } else {
+      navigator.clipboard.writeText(text);
+    }
+  }, []);
 
   // Stable per-track click handlers — avoids creating new lambdas on every render
   // which would defeat React.memo on TrackRow.
@@ -84,8 +96,8 @@ export function TrackResults({ tracks }: TrackResultsProps) {
                 isPlaying={isCurrentTrack && isPlaying}
                 isLoading={loadingTrackId === track.id}
                 onClick={getClickHandler(track, index)}
-                onAddToQueue={() => {}}
-                onShare={() => {}}
+                onAddToQueue={() => addToQueue(track)}
+                onShare={() => handleShare(track)}
               />
             );
           }

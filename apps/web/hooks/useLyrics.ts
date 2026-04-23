@@ -66,14 +66,14 @@ export function useLyrics(
 
   // Update current line based on playback time
   useEffect(() => {
-    if (!lyrics?.parsed || !isPlaying) {
+    if (!lyrics?.parsed) {
       setCurrentLineIndex(-1);
       return;
     }
 
     const newIndex = getCurrentLineIndex(lyrics.parsed, currentTime);
     setCurrentLineIndex((prev) => (prev !== newIndex ? newIndex : prev));
-  }, [currentTime, lyrics?.parsed, isPlaying]); // Use lyrics.parsed instead of lyrics object
+  }, [currentTime, lyrics?.parsed]); // Use lyrics.parsed instead of lyrics object
 
   const hasLyrics = Boolean(lyrics?.lyrics || lyrics?.parsed);
   const hasSyncedLyrics = Boolean(lyrics?.parsed && lyrics.parsed.length > 0);

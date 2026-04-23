@@ -2,7 +2,7 @@
 
 import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { getTrackTitle, getTrackArtists, getCoverUrl } from "@/lib/api/utils";
-import { Play, Pause, SkipForward, ChevronUp, Heart } from "lucide-react";
+import { Play, Pause, Heart } from "lucide-react";
 import { motion, PanInfo, useAnimation } from "motion/react";
 import Image from "next/image";
 import { useCallback } from "react";

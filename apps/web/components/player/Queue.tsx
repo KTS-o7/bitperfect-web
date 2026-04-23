@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { Track } from "@/lib/api/types";
+import { lockScroll, unlockScroll } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -192,12 +193,12 @@ export function Queue({ isOpen, onClose }: QueueProps) {
   // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      lockScroll();
     } else {
-      document.body.style.overflow = "";
+      unlockScroll();
     }
     return () => {
-      document.body.style.overflow = "";
+      unlockScroll();
     };
   }, [isOpen]);
 

@@ -4,13 +4,10 @@ import React, {
   createContext,
   useContext,
   useMemo,
-  useReducer,
   useEffect,
   useRef,
   useCallback,
   useState,
-  Dispatch,
-  SetStateAction,
   ReactNode,
 } from "react";
 import { Track } from "@/lib/api/types";
@@ -255,28 +252,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       audio.removeEventListener("canplay", handleCanPlay);
     };
   }, []); // Empty deps - listeners are stable
-
-  const playTrack = useCallback((track: Track, streamUrl: string) => {
-    if (!audioRef.current || !streamUrl) return;
-
-    audioRef.current.src = streamUrl;
-    safePlay(audioRef.current);
-    addToHistory(track);
-
-    // Determine quality from track metadata
-    const quality = track.audioQuality || "HIGH";
-
-    setState((prev) => ({
-      ...prev,
-      currentTrack: track,
-      isPlaying: true,
-      currentTime: 0,
-      currentQuality: quality,
-      streamUrl: streamUrl,
-    }));
-
-    updateMediaSessionMetadata(track);
-  }, [safePlay]);
 
   const play = useCallback(async () => {
     if (!audioRef.current) return;
@@ -700,7 +675,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   // Stable actions — only change if their own deps change (rarely)
   const actions = useMemo(
     () => ({
-      playTrack,
       addToQueue,
       setQueue,
       reorderQueue,
@@ -720,7 +694,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setIsStatsOpen,
     }),
     [
-      playTrack,
       addToQueue,
       setQueue,
       reorderQueue,

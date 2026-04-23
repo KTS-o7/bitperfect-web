@@ -27,7 +27,7 @@ export function ArtistClient({ artistData }: ArtistClientProps) {
     const isArtistPlaying = currentTrack && artistData.tracks.some(t => t.id === currentTrack.id);
 
     const handlePlayTopTracks = () => {
-        if (isArtistPlaying) {
+        if (isArtistPlaying && isPlaying) {
             togglePlayPause();
         } else if (artistData.tracks.length > 0) {
             setQueue(artistData.tracks, 0);

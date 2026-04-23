@@ -33,6 +33,10 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
         () => new Set(data.likedTracks.map((t) => t.id)),
         [data.likedTracks]
     );
+    const savedAlbumIdSet = useMemo(
+        () => new Set(data.savedAlbums.map((a) => a.id)),
+        [data.savedAlbums]
+    );
     const { success, toast } = useToast();
     const { isAuthenticated } = useAuth();
     const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -146,8 +150,8 @@ export function PersistenceProvider({ children }: { children: React.ReactNode })
     }, [likedTrackIdSet]);
 
     const isAlbumSaved = useCallback((albumId: number) => {
-        return data.savedAlbums.some((a) => a.id === albumId);
-    }, [data.savedAlbums]);
+        return savedAlbumIdSet.has(albumId);
+    }, [savedAlbumIdSet]);
 
     const createPlaylist = useCallback((name: string, description?: string) => {
         const newPlaylist: Playlist = {

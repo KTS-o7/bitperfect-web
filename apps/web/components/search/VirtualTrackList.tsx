@@ -7,6 +7,7 @@ import TrackRow from "./TrackRow";
 import MobileTrackRow from "../mobile/MobileTrackRow";
 import { usePlaybackState, useQueue, useAudioPlayerActions } from "@/contexts/AudioPlayerContext";
 import { useWindowSize } from "@/hooks/useWindowSize";
+import { getTrackTitle, getTrackArtists } from "@/lib/api/utils";
 
 interface VirtualTrackListProps {
   tracks: Track[];
@@ -21,6 +22,8 @@ interface RowData {
   loadingTrackId: number | null;
   isMobile: boolean;
   handleTrackClick: (track: Track, index: number) => void;
+  handleAddToQueue: (track: Track) => void;
+  handleShare: (track: Track) => void;
 }
 
 type RowComponentProps = {
@@ -44,6 +47,8 @@ function RowComponent({
   loadingTrackId,
   isMobile,
   handleTrackClick,
+  handleAddToQueue,
+  handleShare,
 }: RowComponentProps) {
   const track = tracks[index];
   const isCurrentTrack = currentTrack?.id === track.id;
@@ -58,8 +63,8 @@ function RowComponent({
           isPlaying={isCurrentTrack && isPlaying}
           isLoading={loadingTrackId === track.id}
           onClick={() => handleTrackClick(track, index)}
-          onAddToQueue={() => {}}
-          onShare={() => {}}
+          onAddToQueue={() => handleAddToQueue(track)}
+          onShare={() => handleShare(track)}
         />
       ) : (
         <TrackRow
@@ -78,7 +83,7 @@ function RowComponent({
 export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProps) {
   const { isPlaying } = usePlaybackState();
   const { currentTrack } = useQueue();
-  const { setQueue } = useAudioPlayerActions();
+  const { setQueue, addToQueue } = useAudioPlayerActions();
   const [loadingTrackId, setLoadingTrackId] = useState<number | null>(null);
   const { width: windowWidth } = useWindowSize();
   const isMobile = windowWidth > 0 && windowWidth < 1024;
@@ -95,6 +100,19 @@ export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProp
     }
   }, [tracks, setQueue, loadingTrackId]);
 
+  const handleAddToQueue = useCallback((track: Track) => {
+    addToQueue(track);
+  }, [addToQueue]);
+
+  const handleShare = useCallback((track: Track) => {
+    const text = `${getTrackTitle(track)} — ${getTrackArtists(track)}`;
+    if (navigator.share) {
+      navigator.share({ title: text });
+    } else {
+      navigator.clipboard.writeText(text);
+    }
+  }, []);
+
   const rowHeight = isMobile ? 64 : 56;
 
   const rowProps: RowData = {
@@ -104,6 +122,8 @@ export function VirtualTrackList({ tracks, height, width }: VirtualTrackListProp
     loadingTrackId,
     isMobile,
     handleTrackClick,
+    handleAddToQueue,
+    handleShare,
   };
 
   return (
