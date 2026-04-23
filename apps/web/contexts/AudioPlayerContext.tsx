@@ -45,6 +45,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       volume: persistedState.volume ?? 1,
       isMuted: persistedState.isMuted ?? false,
       queue: persistedState.queue || [],
+      displayQueue: persistedState.queue || [],
       currentQueueIndex: persistedState.currentQueueIndex ?? -1,
       shuffleActive: persistedState.shuffleActive ?? false,
       repeatMode: persistedState.repeatMode || "off",
@@ -325,6 +326,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       queue: newQueue,
+      displayQueue: newQueue,
       currentQueueIndex: newCurrentIndex,
     }));
   }, []);
@@ -357,6 +359,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setState((prev) => ({
         ...prev,
         queue: tracks,
+        displayQueue: stateRef.current.shuffleActive ? shuffledQueue.current : tracks,
         currentQueueIndex: effectiveStartIndex,
         currentTrack: track,
         currentTime: 0,
@@ -541,6 +544,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         return {
           ...prev,
           shuffleActive: true,
+          displayQueue: newShuffled,
           currentQueueIndex: newIndex !== -1 ? newIndex : 0,
         };
       } else {
@@ -554,6 +558,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         return {
           ...prev,
           queue: originalQueue,
+          displayQueue: originalQueue,
           shuffleActive: false,
           currentQueueIndex: newIndex !== -1 ? newIndex : 0,
         };
@@ -589,6 +594,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       return {
         ...prev,
         queue: newQueue,
+        displayQueue: newQueue,
         currentQueueIndex: newIndex,
       };
     });
@@ -598,6 +604,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       queue: [],
+      displayQueue: [],
       currentQueueIndex: -1,
     }));
     preloadCache.current.clear();
@@ -791,6 +798,7 @@ export function useQueue() {
     () => ({
       currentTrack: context.currentTrack,
       queue: context.queue,
+      displayQueue: context.displayQueue,
       currentQueueIndex: context.currentQueueIndex,
       shuffleActive: context.shuffleActive,
       repeatMode: context.repeatMode,
@@ -800,6 +808,7 @@ export function useQueue() {
     [
       context.currentTrack,
       context.queue,
+      context.displayQueue,
       context.currentQueueIndex,
       context.shuffleActive,
       context.repeatMode,

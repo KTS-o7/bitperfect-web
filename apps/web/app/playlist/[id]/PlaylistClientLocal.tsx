@@ -41,6 +41,7 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     const [showMenu, setShowMenu] = useState(false);
     const [showQRCode, setShowQRCode] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     useEffect(() => {
         const refreshedPlaylist = getPlaylist(playlistId);
@@ -71,10 +72,8 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
     }, [playlist, tracks, success]);
 
     const handleDelete = useCallback(() => {
-        if (confirm("Are you sure you want to delete this playlist?")) {
-            deletePlaylist(playlistId);
-            window.location.href = "/library";
-        }
+        deletePlaylist(playlistId);
+        window.location.href = "/library";
     }, [deletePlaylist, playlistId]);
 
     const handleScan = useCallback((data: string) => {
@@ -174,18 +173,40 @@ export function PlaylistClient({ playlistId }: PlaylistClientProps) {
                                     <MoreVertical className="w-4 h-4" />
                                 </button>
                                 {showMenu && (
-                                    <div className="absolute right-0 mt-2 w-48 border border-foreground/10 bg-background shadow-lg z-10">
-                                        <button
-                                            onClick={() => {
-                                                handleDelete();
-                                                setShowMenu(false);
-                                            }}
-                                            className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-500 
-                                                       hover:bg-foreground/5 text-[10px] font-mono uppercase tracking-widest"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            Delete Playlist
-                                        </button>
+                                    <div className="absolute right-0 mt-2 w-56 border border-foreground/10 bg-background shadow-lg z-10">
+                                        {confirmDelete ? (
+                                            <div className="p-3 space-y-2">
+                                                <p className="text-[10px] font-mono uppercase tracking-widest text-foreground/60">
+                                                    Delete this playlist?
+                                                </p>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            handleDelete();
+                                                            setShowMenu(false);
+                                                        }}
+                                                        className="flex-1 py-2 bg-red-500 text-white text-[10px] font-mono uppercase tracking-widest hover:bg-red-600 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmDelete(false)}
+                                                        className="flex-1 py-2 border border-foreground/20 text-[10px] font-mono uppercase tracking-widest hover:bg-foreground/5 transition-colors"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setConfirmDelete(true)}
+                                                className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-500 
+                                                           hover:bg-foreground/5 text-[10px] font-mono uppercase tracking-widest"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Delete Playlist
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

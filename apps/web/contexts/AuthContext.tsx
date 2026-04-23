@@ -63,7 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       try {
         await syncToCloud();
-        console.log('[Auth] Synced data before logout');
       } catch (error) {
         console.error('[Auth] Failed to sync before logout:', error);
       }

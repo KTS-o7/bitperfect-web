@@ -10,6 +10,9 @@ export interface AudioPlayerState {
   volume: number;
   isMuted: boolean;
   queue: Track[];
+  /** The effective playback order shown in the queue panel.
+   *  Equals `queue` when shuffle is off; equals the shuffled order when shuffle is on. */
+  displayQueue: Track[];
   currentQueueIndex: number;
   shuffleActive: boolean;
   repeatMode: RepeatMode;

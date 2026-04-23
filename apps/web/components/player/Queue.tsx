@@ -64,10 +64,10 @@ function SortableQueueItem({
   };
 
   const coverUrl = useMemo(() => {
-    const coverId = track?.album?.cover || track?.album?.id;
+    const coverId = track?.album?.cover;
     if (!coverId) return null;
     return getCoverUrl(coverId, "160");
-  }, [track?.album?.cover, track?.album?.id]);
+  }, [track?.album?.cover]);
 
   return (
     <div
@@ -137,13 +137,13 @@ function SortableQueueItem({
 }
 
 export function Queue({ isOpen, onClose }: QueueProps) {
-  const { queue, currentQueueIndex } = useQueue();
+  const { queue, displayQueue, currentQueueIndex } = useQueue();
   const { removeFromQueue, clearQueue, reorderQueue, setQueue } =
     useAudioPlayerActions();
 
   const sortableIds = useMemo(
-    () => queue.map(t => t.id.toString()),
-    [queue],
+    () => displayQueue.map(t => t.id.toString()),
+    [displayQueue],
   );
 
   const sensors = useSensors(
@@ -162,11 +162,11 @@ export function Queue({ isOpen, onClose }: QueueProps) {
       const { active, over } = event;
 
       if (over && active.id !== over.id) {
-        const oldIndex = queue.findIndex(t => t.id.toString() === active.id);
-        const newIndex = queue.findIndex(t => t.id.toString() === over.id);
+        const oldIndex = displayQueue.findIndex(t => t.id.toString() === active.id);
+        const newIndex = displayQueue.findIndex(t => t.id.toString() === over.id);
 
         if (oldIndex !== -1 && newIndex !== -1) {
-          const newQueue = arrayMove([...queue], oldIndex, newIndex);
+          const newQueue = arrayMove([...displayQueue], oldIndex, newIndex);
 
           let newCurrentIndex = currentQueueIndex;
           if (oldIndex === currentQueueIndex) {
@@ -187,7 +187,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
         }
       }
     },
-    [queue, currentQueueIndex, reorderQueue],
+    [displayQueue, currentQueueIndex, reorderQueue],
   );
 
   // Lock body scroll when open
@@ -202,7 +202,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
     };
   }, [isOpen]);
 
-  const upNextCount = queue.length - currentQueueIndex - 1;
+  const upNextCount = displayQueue.length - currentQueueIndex - 1;
 
   const content = (
     <AnimatePresence>
@@ -234,8 +234,8 @@ export function Queue({ isOpen, onClose }: QueueProps) {
                     Queue
                   </div>
                   <div className="text-xs font-mono text-foreground/50 mt-1">
-                    {queue.length}{" "}
-                    {queue.length === 1 ? "track" : "tracks"}
+                    {displayQueue.length}{" "}
+                    {displayQueue.length === 1 ? "track" : "tracks"}
                     {upNextCount > 0 && (
                       <span className="text-foreground/30">
                         {" "}
@@ -246,7 +246,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {queue.length > 0 && (
+                  {displayQueue.length > 0 && (
                     <button
                       onClick={clearQueue}
                       className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-widest border border-foreground/20 text-foreground/60 hover:text-foreground hover:border-foreground transition-colors duration-200"
@@ -266,7 +266,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
             </div>
 
             {/* Reorder hint */}
-            {queue.length > 1 && (
+            {displayQueue.length > 1 && (
               <div className="px-6 py-2 border-b border-foreground/10 flex-shrink-0">
                 <span className="text-[9px] font-mono uppercase tracking-widest text-foreground/30">
                   Drag to reorder
@@ -276,8 +276,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
 
             {/* Queue List */}
             <div className="flex-1 overflow-y-auto">
-              {queue.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
+              {queue.length === 0 ? (                <div className="flex items-center justify-center h-full">
                   <div className="text-center border border-foreground/10 px-12 py-16">
                     <Music2 className="w-10 h-10 text-foreground/20 mx-auto mb-6" />
                     <h3 className="text-sm font-mono uppercase tracking-widest text-foreground/90 mb-2">
@@ -298,7 +297,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
                     items={sortableIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {queue.map((track, index) => (
+                    {displayQueue.map((track, index) => (
                       <SortableQueueItem
                         key={track.id.toString()}
                         id={track.id.toString()}
@@ -307,7 +306,7 @@ export function Queue({ isOpen, onClose }: QueueProps) {
                         isCurrent={index === currentQueueIndex}
                         onPlay={() =>
                           index !== currentQueueIndex &&
-                          setQueue(queue, index)
+                          setQueue(displayQueue, index)
                         }
                         onRemove={() => removeFromQueue(index)}
                       />
